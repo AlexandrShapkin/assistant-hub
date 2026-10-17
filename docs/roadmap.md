@@ -1,35 +1,40 @@
 # Roadmap
 
-**Project state:** pre-alpha proof of platform contracts; not production ready.
-GitHub Issues is the live authoritative task tracker; this page records only
-stage sequencing and canonical issues. A stage or label is not a delivery claim.
+**Status:** pre-alpha. GitHub [Issues](https://github.com/AlexandrShapkin/assistant-hub/issues) is the live source of truth for task state. This page describes sequencing and links, not a second queue. Milestones group stages and do not certify production readiness.
 
-## Foundation
-- Issue: publish initial scaffold with CI, documented workflow, secret hygiene.
-- Follow-up: [TBD issue] authenticated core service API, event schema and adapter SDK.
-- Follow-up: [TBD issue] security model for credentials, audit and permissions.
+## M0 — Foundation
 
-## Connectors
-- [TBD issue] Gmail account adapter (OAuth, safe read-only initial scope).
-- [TBD issue] Telegram user accounts adapter (session security and read-only test).
-- [TBD issue] VK API feasibility (personal vs community differences).
-- [TBD issue] generic site/API/RSS ingestion.
-- [TBD issue] GitHub provider adapter.
-- [TBD issue] optional device agents via restricted remote protocols.
+- [#1](https://github.com/AlexandrShapkin/assistant-hub/issues/1) — adapter SDK and read-only conformance.
+- [#2](https://github.com/AlexandrShapkin/assistant-hub/issues/2) — authenticated access and secrets lifecycle.
+- [#12](https://github.com/AlexandrShapkin/assistant-hub/issues/12) — auditable, idempotent outbound execution (disabled until safely authorized).
 
-## Experience
-- [TBD issue] authenticated self-hosted web UI: unified inbox and approvals.
+## M1 — Connectors
 
-## Automation
-- [TBD issue] LLM classification and drafts, preserving deterministic policy.
-- [TBD issue] publisher/media-center for Telegram/VK, with scoped publishing.
-- [TBD issue] idempotent dispatch, retry/reconciliation and human approval.
+- [#4](https://github.com/AlexandrShapkin/assistant-hub/issues/4) — Gmail read-only synchronization.
+- [#5](https://github.com/AlexandrShapkin/assistant-hub/issues/5) — Telegram user-account read-only integration.
+- [#6](https://github.com/AlexandrShapkin/assistant-hub/issues/6) — VK API capability assessment.
+- [#7](https://github.com/AlexandrShapkin/assistant-hub/issues/7) — general site, RSS and API ingestion.
+- [#8](https://github.com/AlexandrShapkin/assistant-hub/issues/8) — GitHub adapter.
 
-## Already implemented (demo only)
+## M2 — Experience
 
-Synthetic adapter, account-scoped event ingest, cursor state, SQLite storage,
-deterministic permission decisions, idempotent intent recording, audit-only
-review, CLI, unittest checks, local public-tree hygiene.
+- [#3](https://github.com/AlexandrShapkin/assistant-hub/issues/3) — authenticated self-hosted unified inbox.
 
-No external provider, deployment, license, production date or compatibility
-commitment is claimed. Refer to [workflow](workflow.md) for Issue lifecycle.
+## M3 — Automation
+
+- [#9](https://github.com/AlexandrShapkin/assistant-hub/issues/9) — isolated remote-device agent contracts.
+- [#10](https://github.com/AlexandrShapkin/assistant-hub/issues/10) — model-assisted suggestions, drafts and prioritization.
+- [#11](https://github.com/AlexandrShapkin/assistant-hub/issues/11) — Telegram-channel media publishing workflow.
+
+## Implemented in bootstrap (synthetic demonstration only)
+
+Typed provider-neutral contracts, explicit adapter registry, account-scoped
+event ingest, persisted cursors, SQLite state and deduplication, deterministic
+permissions, idempotent intent record, audit-only review, CLI, unit tests,
+CI and public-tree checks.
+
+No real provider integration, external sending, model calls, deployments,
+production dates, provider compatibilities or license grants are claimed.
+
+See [development workflow](workflow.md) for Issue/PR lifecycle, testing,
+evidence requirements and security boundaries.
