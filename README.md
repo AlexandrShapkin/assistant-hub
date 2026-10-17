@@ -12,8 +12,10 @@ no deployment configuration, private data, or provider integration is included.
 The independent [request authorization primitives](docs/security.md) provide
 bounded in-memory bearer/browser sessions and CSRF proof checks in offline tests.
 An offline owner-password verifier now demonstrates login admission into these
-sessions using synthetic passwords. No web UI or HTTP server exists. Core policy
-and audit-only review remain separate.
+sessions using synthetic passwords. The separate [offline UI preview](web/README.md)
+uses invented data and in-memory simulations only. No application HTTP backend,
+authenticated browser application or real API exists. Core policy and audit-only
+review remain separate.
 
 ## Quickstart
 
@@ -43,6 +45,20 @@ both intentionally reuse an external event ID to demonstrate account separation.
 unless trusted application code supplies an exact `ApprovalRule`. The CLI does
 not create rules. Approval records never send, execute, change a stored policy
 decision, or grant future permission. All displayed demo content is fake.
+
+## Offline browser preview
+
+A provider-neutral, static [Assistant Hub preview](web/README.md) demonstrates an
+inbox, account/service filters and an explicit draft/review simulation. View locally:
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory web
+```
+
+Open `http://127.0.0.1:8765`. All content is synthetic; state resets on refresh.
+No external data, credentials, browser persistence or application network calls
+are used. Auth/logout, real APIs, a public site and real browser access to private
+data are NOT implemented. The static file server is only a local viewing tool.
 
 ## Offline password proof (synthetic only)
 

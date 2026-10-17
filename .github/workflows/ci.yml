@@ -27,3 +27,17 @@ jobs:
         env:
           PYTHONPATH: src
       - run: python scripts/check_public_tree.py
+
+  ui-check:
+    name: offline UI check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          for module in web/*.mjs web/tests/*.mjs; do
+            node --check "$module"
+          done
+      - run: node --test web/tests/*.test.mjs
