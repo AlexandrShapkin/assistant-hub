@@ -17,8 +17,10 @@ strict event deduplication, auditability and predictable error handling.
 Maturity is **pre-alpha and localhost-only**. Two adapters use fictional data
 by default. An optional explicit GitHub public-repository reader (Issue #28)
 can make anonymous, read-only HTTPS requests for public Issues, PRs and CI runs
-when configured at local-server startup, and persists them to local SQLite.
-It has no GitHub App/OAuth/private-repository access, no background collection,
+when configured at local-server startup, and persists them to local SQLite. Up to eight public feeds may also be
+explicitly selected with optional read-only scheduled collection; defaults remain
+manual and synthetic. It has no GitHub App/OAuth/private-repository access,
+no background GitHub collection,
 no external mutation/dispatch, and no production-facing deployment. Public
 GitHub Pages remains a separate synthetic-only offline interface.
 Do not conflate a verified public read-only source with unrestricted account access.

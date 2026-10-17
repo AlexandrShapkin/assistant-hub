@@ -212,16 +212,27 @@ class TransportTests(unittest.TestCase):
 
 
 class FeedServerTests(unittest.TestCase):
-    def test_cli_one_feed_only(self):
+    def test_cli_multiple_feeds_and_explicit_scheduling(self):
         from assistant_hub.local_server import main
         args = ['serve', '--verifier', '/tmp/feed-test-owner.json', '--db', '/tmp/feed-test-db',
                 '--public-feed', URL]
         with patch('assistant_hub.local_server.LocalServer') as server, patch('builtins.print'):
             main(args)
             server.assert_called_once_with(Path('/tmp/feed-test-owner.json'), '/tmp/feed-test-db',
-                                           18770, None, public_feed=URL)
+                                           18770, None, public_feed=(URL,))
         with patch('assistant_hub.local_server.LocalServer') as server:
-            with self.assertRaises(SystemExit): main(args + ['--public-feed', URL + '2'])
+            for flags in (['--poll-interval', '899'], ['--poll-interval', '86401'],
+                          ['--poll-interval', '-1'], ['--poll-interval', '0']):
+                with self.subTest(flags=flags), self.assertRaises(SystemExit):
+                    main(args + flags)
+            server.assert_not_called()
+        with patch('assistant_hub.local_server.LocalServer') as server, patch('builtins.print'):
+            main(args + ['--public-feed', URL + '2'])
+            server.assert_called_once_with(Path('/tmp/feed-test-owner.json'), '/tmp/feed-test-db',
+                                           18770, None, public_feed=(URL, URL + '2'))
+        with patch('assistant_hub.local_server.LocalServer') as server:
+            with self.assertRaises(SystemExit):
+                main(['serve', '--verifier', '/tmp/owner', '--db', '/tmp/db', '--poll-interval', '900'])
             server.assert_not_called()
 
     def test_opt_in_owner_boundary_and_banners(self):

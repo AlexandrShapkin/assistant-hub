@@ -13,7 +13,8 @@ import threading
 import warnings
 
 from .adapters.github_public import GitHubPublicAdapter
-from .adapters.public_feed import PublicFeedAdapter
+from .adapters.public_feed import PublicFeedCatalog
+from .feed_schedule import FeedSchedule, MIN_INTERVAL, MAX_INTERVAL
 from .core.contracts import PollError, RateLimitPollError
 from .core.demo import BulletinAdapter, DemoAdapter
 from .core.hub import Hub
@@ -101,8 +102,12 @@ class LocalServer(ThreadingHTTPServer):
             adapters.append(GitHubPublicAdapter(github_public_repo))
         self.github_public = github_public_repo is not None
         self.public_feed = public_feed is not None
+        self.feed_accounts = ()
         if self.public_feed:
-            adapters.append(PublicFeedAdapter(public_feed))
+            feeds = (public_feed,) if isinstance(public_feed, str) else public_feed
+            catalog = PublicFeedCatalog(feeds)
+            self.feed_accounts = catalog.accounts
+            adapters.append(catalog)
         for adapter in adapters:
             self.registry.enable(adapter, tuple(Binding(a, ("read",)) for a in adapter.accounts))
             self.bindings.extend((adapter.manifest.service_id, a) for a in adapter.accounts)
@@ -299,6 +304,8 @@ def main(argv=None):
     serve.add_argument("--db", required=True)
     serve.add_argument("--github-public-repo", metavar="OWNER/REPO")
     serve.add_argument("--public-feed", metavar="HTTPS_URL", action="append")
+    serve.add_argument("--poll-interval", type=int, metavar="SECONDS",
+                       help="opt-in scheduled feed reads (900–86400 seconds)")
     serve.add_argument("--port", type=int, default=18770)
     args = parser.parse_args(argv)
     try:
@@ -317,14 +324,28 @@ def main(argv=None):
         else:
             if not 1 <= args.port <= 65535:
                 raise ValueError("invalid port")
-            if args.public_feed and len(args.public_feed) != 1:
-                raise ValueError("exactly one feed supported")
-            feed_options = {"public_feed": args.public_feed[0]} if args.public_feed else {}
+            if args.poll_interval is not None and (not args.public_feed or
+                    not MIN_INTERVAL <= args.poll_interval <= MAX_INTERVAL):
+                raise ValueError("scheduled feeds need an explicit 900–86400s interval")
+            feed_options = {"public_feed": tuple(args.public_feed)} if args.public_feed else {}
             with LocalServer(verifier, args.db, args.port, args.github_public_repo, **feed_options) as server:
                 label = ("Public read-only feeds + synthetic" if server.public_feed else
                          "Public read-only GitHub + synthetic" if server.github_public else "Synthetic-only")
                 print(f"{label} application: {server.origin}", flush=True)
-                server.serve_forever()
+                stopped = threading.Event()
+                worker = None
+                if args.poll_interval is not None:
+                    schedule = FeedSchedule(server.registry, server.db_path, server.feed_accounts,
+                                            args.poll_interval, server.lock)
+                    worker = threading.Thread(target=schedule.run, args=(stopped,), daemon=True,
+                                              name="assistant-hub-public-feed-poller")
+                    worker.start()
+                try:
+                    server.serve_forever()
+                finally:
+                    stopped.set()
+                    if worker is not None:
+                        worker.join(timeout=10)
     except (OSError, ValueError, sqlite3.Error, EOFError, getpass.GetPassWarning):
         parser.exit(1, "Local operation refused; check private paths and configuration.\n")
     except KeyboardInterrupt:
