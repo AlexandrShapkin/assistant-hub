@@ -1,7 +1,9 @@
 # Security assumptions and limitations
 
-This is not production software. It has no external dispatch; only the opt-in public GitHub reader has external network access. It has no
-real provider credentials or language-model permission path. The independent
+This is not production software. It has no external dispatch. Network access is limited to opt-in public readers
+and the isolated, explicitly called GitHub App token transport described below.
+No real provider credentials are included or used in tests, and there is no
+language-model permission path. The independent
 `security` package checks session request proofs and a synthetic owner-password
 login admission proof, now also used by the separate localhost application below.
 Untrusted event text is data and cannot create approval rules or capabilities.
@@ -372,3 +374,38 @@ public URL validator and match the configured host; links are never followed.
 No scheduling, lossless history guarantee, production deployment or provider
 mutations are implemented. Tests mock external transports/DNS/sockets; they do
 not establish interoperability with any live feed.
+
+## GitHub App authentication foundation (Issue #34)
+
+`security/github_app.py` is an isolated, explicit authentication primitive for a
+future selected private-repository reader; it is not registered with an adapter,
+CLI or server. No real app, credential exchange or private repository integration
+has been tested. See [owner setup and API limits](github-app-setup.md).
+
+Configuration carries only numeric app/installation IDs, a strict ASCII
+repository slug and a redacted absolute key path. Every signing attempt pins
+all path directories with dirfd/O_NOFOLLOW, requires a 0700 effective-owner
+parent and a 0600 effective-owner regular single-link file opened O_NOFOLLOW,
+and rejects unsafe ancestry and Git working-tree storage. Root-owned sticky
+shared temporary ancestry is allowed, but never as the final private parent.
+No keys are stored in configuration, generated or added to the project. The
+optional explicitly selected system OpenSSL signer receives JWT signing bytes
+on stdin, captures signature output, uses no shell, and has a six-second timeout.
+Errors omit paths, tokens, JWTs, provider bodies and subprocess diagnostics.
+
+This assumes a trusted single owner, host and filesystem. OpenSSL reopens the
+validated absolute pathname; the open descriptor does not make that subprocess
+reopen atomic against a malicious same-owner process. No protection against
+process compromise, hostile mounts or same-owner replacement is claimed. Key
+custody and encrypted-at-rest storage remain unresolved; this is not a vault.
+Injected signer/transport code is trusted. JWTs and tokens hide values in repr,
+but explicit `.value` access remains sensitive and Python memory is not securely
+erased. Tokens remain in memory only, with no persistence or environment lookup.
+
+The only credentialed transport is an explicit fixed GitHub installation-token
+POST, confined to one repository and four read permissions. It has no redirects,
+proxies, cookies, retries or returned-URL traversal. Strict duplicate-free JSON,
+16 KiB responses, status, scope and expiry checks fail closed. Field-shape
+compatibility remains unverified. Cache failures erase the local cached reference;
+local clear/revoke does not invalidate tokens at GitHub or erase caller copies.
+No private API reads, dispatch, listener or production deployment is added.
