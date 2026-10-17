@@ -2,3 +2,17 @@
 
 .language-switch{display:flex;gap:3px;align-items:center;border:1px solid #dbe3de;border-radius:.5rem;padding:3px;background:#fff}.language-switch button{margin:0;min-width:38px;padding:.35rem .5rem;border:0;background:transparent;color:#526d60}.language-switch button[aria-pressed="true"]{background:#254c40;color:#fff;font-weight:700}
 @media(max-width:600px){header{flex-wrap:wrap}.language-switch{margin-left:auto}header>span:nth-child(3){margin-left:0}}
+
+
+.calendar-panel{grid-column:1/-1}
+.calendar-panel h2{margin-bottom:.5rem}
+.calendar-panel p{max-width:72ch}
+.calendar-panel input[type=file]{max-width:38rem}
+.calendar-panel select{max-width:22rem}
+.calendar-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.65rem}
+.calendar-day{border:1px solid #dbe3de;border-radius:.6rem;padding:.85rem;background:#f8faf7}
+.calendar-day h3{font-size:1rem;margin:0 0 .5rem}
+.calendar-lesson{padding:.55rem 0;border-top:1px solid #dbe3de}
+.calendar-lesson strong{display:block}
+.calendar-lesson small{display:block;color:#53675e}
+.calendar-updated{color:#52675e;font-size:.85rem}

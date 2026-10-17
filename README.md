@@ -215,6 +215,42 @@ This is a **rolling snapshot, not lossless synchronization**. Public `web/`
 and GitHub Pages stay synthetic-only. See
 [security boundaries](docs/security.md#public-feed-reader-issues-32-36).
 
+## Manual weekly iCalendar import (Issue #41)
+
+The authenticated localhost workspace has a separate **Classes by week** section.
+In a browser on the owner's ThinkPad, export the selected week as an `.ics`
+file from the timetable website, open `http://localhost:18770/` through the
+existing SSH tunnel, sign in and select the exported file. Import is
+**owner-initiated and entirely local to Assistant Hub**: the app does not
+crawl or request any university pages. File selection does not create a
+recurring subscription or remote authorization.
+
+Only a single Monday–Sunday week is accepted per file. The parser supports
+bounded UTF-8 iCalendar 2.0 events, `UID`, `DTSTART`, `DTEND`, `SUMMARY`,
+`LOCATION` and `DESCRIPTION`, UTC instants and standard IANA `TZID` names.
+Floating times default to Altai's `Asia/Barnaul` timezone. It rejects
+recurrence rules, unsupported dates, conflicting time zones, malformed files,
+empty calendars, over 80 events or over 96 KiB. Real upstream export formats
+are **not yet verified**; a site-provided file can reveal needed compatibility
+work, and unsupported files must fail closed.
+
+The import replaces only **one selected week** in an atomic SQLite
+transaction. Repeating an unchanged file does not add duplicates. Changed
+lessons update in place using stable UID-based identities, preserving workflow
+statuses. Omitted/cancelled lessons are removed from that week's current
+snapshot (including their obsolete workflow statuses); weeks outside the file
+remain untouched. Each import is audit-recorded and dated, and the UI displays
+that last import time. This is a manually curated **snapshot**, not a live
+university calendar, scheduled feed or reliable attendance record.
+The owner should check the official source for late changes.
+
+Selected files are read by the browser as text and sent only to the already
+authenticated local API over the SSH tunnel. Stored lesson text and audit data
+are private SQLite content; weekly backups follow the VPS private-backup
+configuration. Uploaded files are not persisted separately, no remote URL is
+followed, and no personal timetable identifiers belong in Git or GitHub Pages.
+See [calendar security boundaries](docs/security.md#manual-weekly-icalendar-import-issue-41).
+
 ## GitHub App auth foundation (Issue #34)
 
 An isolated stdlib authentication module provides configured app/installation/

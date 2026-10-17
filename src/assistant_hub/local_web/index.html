@@ -60,8 +60,20 @@
       <h2 data-i18n="itemDetails">Подробности</h2>
       <p data-i18n="selectPrompt">Выбери событие, чтобы изменить его статус.</p>
     </aside>
+    <section class="card calendar-panel" id="calendar-panel">
+      <p class="eyebrow" data-i18n="calendarEyebrow">ЛИЧНОЕ РАСПИСАНИЕ</p>
+      <h2 data-i18n="calendarTitle">Занятия по неделям</h2>
+      <p data-i18n="calendarHint">Экспортируй одну неделю в iCal (.ics) и загрузи файл сюда. Никаких запросов к сайту университета.</p>
+      <label for="calendar-file" data-i18n="calendarFile">Файл iCalendar (.ics)</label>
+      <input id="calendar-file" type="file" accept=".ics,text/calendar">
+      <button id="calendar-import" type="button" data-i18n="calendarImport">Импортировать неделю</button>
+      <label for="calendar-week" data-i18n="calendarWeek">Неделя</label>
+      <select id="calendar-week"></select>
+      <p id="calendar-updated" class="calendar-updated"></p>
+      <div id="calendar-days" class="calendar-days"></div>
+    </section>
   </main>
-  <footer data-i18n="footer">Предварительная версия · Только localhost · Публичные или учебные данные · Без отправки действий</footer>
+  <footer data-i18n="footer">Предварительная версия · Только localhost · Личный календарь через ручной импорт · Без отправки действий</footer>
   <noscript>Для работы этой локальной панели требуется JavaScript.</noscript>
 </body>
 </html>

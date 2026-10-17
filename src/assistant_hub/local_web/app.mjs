@@ -6,6 +6,8 @@ let services = [];
 let selected = null;
 let locale = DEFAULT_LOCALE;
 let noticeState = null;
+let calendarWeeks = [];
+let selectedWeek = null;
 const $ = id => document.getElementById(id);
 const tr = (key, params) => t(locale, key, params);
 const notice = (key, params = {}) => {
@@ -21,6 +23,10 @@ function loggedOut() {
   events = [];
   services = [];
   selected = null;
+  calendarWeeks = [];
+  selectedWeek = null;
+  $('calendar-file').value = '';
+  $('calendar-days').replaceChildren();
   $('items').replaceChildren();
   $('details').replaceChildren();
   $('workspace').hidden = true;
@@ -93,6 +99,57 @@ function details() {
   }));
   target.append(label, select, save);
 }
+const calendarRecords = () => events.filter(e => e.service_id === 'local-calendar' && e.account_id === 'weekly-ics');
+function calendarRender() {
+  const weeks = $('calendar-week');
+  weeks.replaceChildren();
+  const current = calendarWeeks.find(w => w.week === selectedWeek);
+  if (!current && calendarWeeks.length) selectedWeek = calendarWeeks[0].week;
+  for (const week of calendarWeeks) {
+    const option = element('option', week.week);
+    option.value = week.week;
+    weeks.append(option);
+  }
+  weeks.value = selectedWeek || '';
+  weeks.disabled = !calendarWeeks.length;
+  const place = $('calendar-days');
+  place.replaceChildren();
+  const entry = calendarWeeks.find(w => w.week === selectedWeek);
+  if (!entry) {
+    $('calendar-updated').textContent = tr('calendarNone');
+    return;
+  }
+  const imported = entry.imported_at ? entry.imported_at + ' UTC' : '';
+  $('calendar-updated').textContent = tr('calendarUpdated', {date: imported.replace(/ UTC$/, '')});
+  const lessons = calendarRecords().filter(e => e.attributes.week_start === selectedWeek);
+  const date = new Date(selectedWeek + 'T12:00:00Z');
+  for (let index = 0; index < 7; index++) {
+    const day = new Date(date);
+    day.setUTCDate(date.getUTCDate() + index);
+    const iso = day.toISOString().slice(0, 10);
+    const label = new Intl.DateTimeFormat(locale === 'ru' ? 'ru-RU' : 'en-US',
+      {weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC'}).format(day);
+    const box = element('section', '');
+    box.className = 'calendar-day';
+    box.append(element('h3', label));
+    const today = lessons.filter(e => e.attributes.date_local === iso)
+      .sort((a,b) => a.attributes.time_local.localeCompare(b.attributes.time_local));
+    if (!today.length) box.append(element('small', tr('calendarNoClasses')));
+    for (const lesson of today) {
+      const item = element('div', '');
+      item.className = 'calendar-lesson';
+      item.append(element('small', lesson.attributes.time_local), element('strong', lesson.title));
+      if (lesson.attributes.location) item.append(element('small', lesson.attributes.location));
+      box.append(item);
+    }
+    place.append(box);
+  }
+}
+async function calendarRefresh() {
+  calendarWeeks = await api('/api/calendar/weeks');
+  calendarRender();
+}
+
 function render() {
   const query = $('search').value.trim().toLowerCase();
   const visible = events.filter(e =>
@@ -112,6 +169,7 @@ function render() {
   }
   if (!visible.length) $('items').append(element('p', tr('empty')));
   details();
+  calendarRender();
 }
 async function refresh() {
   events = await api('/api/inbox');
@@ -136,6 +194,7 @@ $('login-form').addEventListener('submit', event => {
     options('service', [...new Set(services.map(s => s.service))], tr('allServices'));
     accounts();
     await refresh();
+    await calendarRefresh();
     $('login-panel').hidden = true;
     $('workspace').hidden = false;
     notice('signedIn');
@@ -144,12 +203,35 @@ $('login-form').addEventListener('submit', event => {
 $('service').addEventListener('change', () => { accounts(); render(); });
 for (const id of ['account', 'status-filter', 'search']) $(id).addEventListener('input', render);
 $('collect').addEventListener('click', () => run($('collect'), async () => {
-  for (const binding of services.filter(s => (!$('service').value || s.service === $('service').value) && (!$('account').value || s.account === $('account').value))) {
+  for (const binding of services.filter(s => s.capabilities.includes('read') && (!$('service').value || s.service === $('service').value) && (!$('account').value || s.account === $('account').value))) {
     await api('/api/collect', {service: binding.service, account: binding.account});
   }
   await refresh();
   notice('collected');
 }));
+$('calendar-week').addEventListener('change', () => {
+  selectedWeek = $('calendar-week').value;
+  calendarRender();
+});
+$('calendar-import').addEventListener('click', () => {
+  const file = $('calendar-file').files?.[0];
+  if (!file || !file.name.toLowerCase().endsWith('.ics') || !file.size || file.size > 96 * 1024) {
+    notice('calendarBadFile');
+    return;
+  }
+  run($('calendar-import'), async () => {
+    const ical = await file.text();
+    const result = await api('/api/calendar/import', {ical});
+    $('calendar-file').value = '';
+    selectedWeek = result.week;
+    await refresh();
+    await calendarRefresh();
+    $('service').value = 'local-calendar';
+    accounts();
+    render();
+    notice('calendarSaved', result);
+  });
+});
 $('logout').addEventListener('click', () => run($('logout'), async () => {
   await api('/api/logout', {});
   loggedOut();
@@ -174,6 +256,7 @@ function setLocale(next) {
     if (allAccount) allAccount.textContent = tr('allAccounts');
     render();
   }
+  if (!$('workspace').hidden) calendarRender();
   if (noticeState) $('notice').textContent = tr(noticeState.key, noticeState.params);
 }
 for (const code of LOCALES) $('locale-' + code).addEventListener('click', () => setLocale(code));

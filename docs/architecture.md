@@ -158,3 +158,20 @@ not remote revocation. There is no adapter registration, server route, account
 configuration persistence or private repository read integration. Existing public
 GitHub collection and the offline `web/` demo remain unchanged. See
 [setup and limitations](github-app-setup.md); parent #8 remains open.
+
+
+## Owner-uploaded weekly timetable (Issue #41, manual portion)
+
+`calendar_import.py` parses a bounded, explicit UTF-8 iCalendar 2.0 file
+without network I/O. The owner-only localhost API validates session, exact
+Host/Origin, upload size and all events before touching SQLite. One-week
+replacement is transactional in `Store.import_calendar_week`, leaving other
+weeks and provider cursors unchanged. It reuses the existing inbox and
+workflow-status storage, with a separate `calendar_weeks` table for manual
+import freshness. The local UI presents seven weekday groups.
+
+This input is an **import**, not an adapter polling a remote provider.
+The local-calendar identity has no `read` registry binding or scheduled
+worker; clicking Collect does not fetch the timetable website.
+The currently supported format has no recurrence expansion or official
+university API connector. Private owner data never enters GitHub Pages.
