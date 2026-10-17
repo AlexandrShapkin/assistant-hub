@@ -59,7 +59,9 @@ def week_of(moment, zone):
     return (local - timedelta(days=local.weekday())).isoformat()
 
 
-def parse_ical(payload, zone=DEFAULT_ZONE):
+def parse_ical(payload, zone=DEFAULT_ZONE, provenance='manual-ics'):
+    if provenance not in ('manual-ics', 'subscription-ics'):
+        raise ValueError("unsupported calendar provenance")
     if not isinstance(payload, str):
         raise ValueError("calendar upload must be UTF-8 text")
     if not 0 < len(payload.encode("utf-8")) <= MAX_ICAL_BYTES:
@@ -181,7 +183,7 @@ def parse_ical(payload, zone=DEFAULT_ZONE):
                             ACCOUNT, title, body,
                             {"week_start": week, "date_local": start_local.date().isoformat(),
                              "time_local": f"{start_local:%H:%M}–{end_local:%H:%M}",
-                             "location": location, "timezone": zone, "provenance": "manual-ics"}))
+                             "location": location, "timezone": zone, "provenance": provenance}))
     # A file containing only cancelled events cannot silently clear a week.
     if not output:
         raise ValueError("empty calendar snapshot")

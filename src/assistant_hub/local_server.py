@@ -15,6 +15,7 @@ import warnings
 from .adapters.github_public import GitHubPublicAdapter
 from .adapters.public_feed import PublicFeedCatalog
 from .calendar_import import parse_ical, MAX_ICAL_BYTES, SERVICE as CALENDAR_SERVICE, ACCOUNT as CALENDAR_ACCOUNT
+from .calendar_sync import CalendarSubscription, read_subscription_url
 from .feed_schedule import FeedSchedule, MIN_INTERVAL, MAX_INTERVAL
 from .core.contracts import PollError, RateLimitPollError
 from .core.demo import BulletinAdapter, DemoAdapter
@@ -319,6 +320,10 @@ def main(argv=None):
     serve.add_argument("--public-feed", metavar="HTTPS_URL", action="append")
     serve.add_argument("--poll-interval", type=int, metavar="SECONDS",
                        help="opt-in scheduled feed reads (900–86400 seconds)")
+    serve.add_argument("--calendar-url-file", metavar="PRIVATE_FILE",
+                       help="opt-in approved public .ics subscription URL in a 0600 private file")
+    serve.add_argument("--calendar-interval", type=int, metavar="SECONDS",
+                       help="opt-in calendar checks every 900–86400 seconds")
     serve.add_argument("--port", type=int, default=18770)
     args = parser.parse_args(argv)
     try:
@@ -340,24 +345,36 @@ def main(argv=None):
             if args.poll_interval is not None and (not args.public_feed or
                     not MIN_INTERVAL <= args.poll_interval <= MAX_INTERVAL):
                 raise ValueError("scheduled feeds need an explicit 900–86400s interval")
+            if (args.calendar_url_file is None) != (args.calendar_interval is None):
+                raise ValueError("calendar subscription needs URL file and interval")
+            if args.calendar_interval is not None and not MIN_INTERVAL <= args.calendar_interval <= MAX_INTERVAL:
+                raise ValueError("invalid calendar interval")
+            # Runtime-only owner configuration, never a URL in argv or public API.
+            calendar_url = read_subscription_url(args.calendar_url_file) if args.calendar_url_file else None
             feed_options = {"public_feed": tuple(args.public_feed)} if args.public_feed else {}
             with LocalServer(verifier, args.db, args.port, args.github_public_repo, **feed_options) as server:
                 label = ("Public read-only feeds + synthetic" if server.public_feed else
                          "Public read-only GitHub + synthetic" if server.github_public else "Synthetic-only")
                 print(f"{label} application: {server.origin}", flush=True)
                 stopped = threading.Event()
-                worker = None
+                workers = []
                 if args.poll_interval is not None:
                     schedule = FeedSchedule(server.registry, server.db_path, server.feed_accounts,
                                             args.poll_interval, server.lock)
-                    worker = threading.Thread(target=schedule.run, args=(stopped,), daemon=True,
-                                              name="assistant-hub-public-feed-poller")
+                    workers.append(threading.Thread(target=schedule.run, args=(stopped,), daemon=True,
+                                                    name="assistant-hub-public-feed-poller"))
+                if calendar_url is not None:
+                    subscription = CalendarSubscription(server.db_path, calendar_url,
+                                                        args.calendar_interval, server.lock)
+                    workers.append(threading.Thread(target=subscription.run, args=(stopped,), daemon=True,
+                                                    name="assistant-hub-calendar-poller"))
+                for worker in workers:
                     worker.start()
                 try:
                     server.serve_forever()
                 finally:
                     stopped.set()
-                    if worker is not None:
+                    for worker in workers:
                         worker.join(timeout=10)
     except (OSError, ValueError, sqlite3.Error, EOFError, getpass.GetPassWarning):
         parser.exit(1, "Local operation refused; check private paths and configuration.\n")
