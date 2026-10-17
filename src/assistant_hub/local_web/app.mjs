@@ -1,10 +1,19 @@
+import { DEFAULT_LOCALE, LOCALES, t, formatDate } from './i18n.mjs';
 // Session proof stays in this module's memory. Refresh deliberately logs out.
 let token = null;
 let events = [];
 let services = [];
 let selected = null;
+let locale = DEFAULT_LOCALE;
+let noticeState = null;
 const $ = id => document.getElementById(id);
-const notice = message => { $('notice').textContent = message; };
+const tr = (key, params) => t(locale, key, params);
+const notice = (key, params = {}) => {
+  noticeState = { key, params };
+  $('notice').textContent = tr(key, params);
+};
+const rawSourceBanner = $('source-banner').textContent;
+const sourceMode = rawSourceBanner.startsWith('Synthetic demo') ? 'syntheticBanner' : 'publicBanner';
 const statuses = ['new', 'review', 'deferred', 'done'];
 
 function loggedOut() {
@@ -30,7 +39,7 @@ async function api(path, body) {
   });
   if (!response.ok) {
     if (response.status === 401) loggedOut();
-    throw new Error('Request denied. Check login, selection and localhost URL.');
+    throw new Error(tr('requestFailed'));
   }
   return response.json();
 }
@@ -53,34 +62,34 @@ function options(id, values, all) {
   }
 }
 function accounts() {
-  options('account', services.filter(s => !$('service').value || s.service === $('service').value).map(s => s.account), 'All accounts');
+  options('account', services.filter(s => !$('service').value || s.service === $('service').value).map(s => s.account), tr('allAccounts'));
 }
 const identity = event => JSON.stringify([event.service_id, event.account_id, event.external_id]);
 function details() {
   const target = $('details');
-  target.replaceChildren(element('h2', 'Item details'));
+  target.replaceChildren(element('h2', tr('itemDetails')));
   const event = events.find(e => identity(e) === selected);
   if (!event) {
-    target.append(element('p', 'Select an item to review its workflow status.'));
+    target.append(element('p', tr('selectPrompt')));
     return;
   }
-  target.append(element('h3', event.title), element('p', `${event.service_id} / ${event.account_id} / ${event.external_id}`), element('p', event.timestamp), element('pre', event.body));
-  const label = element('label', 'Workflow status (UI only)');
+  target.append(element('h3', event.title), element('p', `${event.service_id} / ${event.account_id} / ${event.external_id}`), element('p', formatDate(event.timestamp, locale)), element('pre', event.body));
+  const label = element('label', tr('detailStatus'));
   label.htmlFor = 'item-status';
   const select = element('select', '');
   select.id = 'item-status';
   for (const status of statuses) {
-    const option = element('option', status);
+    const option = element('option', tr('status.' + status));
     option.value = status;
     select.append(option);
   }
   select.value = event.status;
-  const save = element('button', 'Save status');
+  const save = element('button', tr('save'));
   save.type = 'button';
   save.addEventListener('click', () => run(save, async () => {
     await api('/api/status', {service: event.service_id, account: event.account_id, external_id: event.external_id, status: select.value});
     await refresh();
-    notice('Workflow status saved locally. No action dispatched.');
+    notice('saved');
   }));
   target.append(label, select, save);
 }
@@ -91,17 +100,17 @@ function render() {
     (!$('account').value || e.account_id === $('account').value) &&
     (!$('status-filter').value || e.status === $('status-filter').value) &&
     [e.title, e.body, e.service_id, e.account_id, e.external_id].join(' ').toLowerCase().includes(query));
-  $('count').textContent = `${visible.length} items`;
+  $('count').textContent = tr('itemCount', {count: visible.length});
   $('items').replaceChildren();
   for (const event of visible) {
     const button = element('button', event.title);
     button.type = 'button';
     button.className = 'item';
-    button.append(element('small', `${event.service_id} / ${event.account_id} / ${event.external_id} · ${event.status}`));
+    button.append(element('small', `${event.service_id} / ${event.account_id} / ${event.external_id} · ${tr('status.' + event.status)}`));
     button.addEventListener('click', () => { selected = identity(event); details(); });
     $('items').append(button);
   }
-  if (!visible.length) $('items').append(element('p', 'No matching items. Collect events to populate the inbox.'));
+  if (!visible.length) $('items').append(element('p', tr('empty')));
   details();
 }
 async function refresh() {
@@ -111,7 +120,7 @@ async function refresh() {
 async function run(button, action) {
   button.disabled = true;
   try { await action(); }
-  catch { notice('Request failed. Use the exact localhost URL and sign in again if needed.'); }
+  catch { notice('requestFailed'); }
   finally { button.disabled = false; }
 }
 $('login-form').addEventListener('submit', event => {
@@ -124,12 +133,12 @@ $('login-form').addEventListener('submit', event => {
     token = (await api('/api/login', {password: secret})).token;
     await api('/api/session');
     services = await api('/api/services');
-    options('service', [...new Set(services.map(s => s.service))], 'All services');
+    options('service', [...new Set(services.map(s => s.service))], tr('allServices'));
     accounts();
     await refresh();
     $('login-panel').hidden = true;
     $('workspace').hidden = false;
-    notice('Signed in. Collection is read-only and manual.');
+    notice('signedIn');
   });
 });
 $('service').addEventListener('change', () => { accounts(); render(); });
@@ -139,10 +148,33 @@ $('collect').addEventListener('click', () => run($('collect'), async () => {
     await api('/api/collect', {service: binding.service, account: binding.account});
   }
   await refresh();
-  notice('Page collected. Repeated collection deduplicates; public snapshots can miss updates.');
+  notice('collected');
 }));
 $('logout').addEventListener('click', () => run($('logout'), async () => {
   await api('/api/logout', {});
   loggedOut();
-  notice('Logged out. Session revoked.');
+  notice('loggedOut');
 }));
+
+
+function setLocale(next) {
+  if (!LOCALES.includes(next)) return;
+  locale = next;
+  document.documentElement.lang = locale;
+  document.title = tr('pageTitle');
+  for (const node of document.querySelectorAll('[data-i18n]')) node.textContent = tr(node.dataset.i18n);
+  for (const node of document.querySelectorAll('[data-i18n-aria]')) node.setAttribute('aria-label', tr(node.dataset.i18nAria));
+  for (const node of document.querySelectorAll('[data-i18n-placeholder]')) node.placeholder = tr(node.dataset.i18nPlaceholder);
+  $('source-banner').textContent = tr(sourceMode);
+  for (const code of LOCALES) $('locale-' + code).setAttribute('aria-pressed', String(code === locale));
+  if (!$('workspace').hidden) {
+    const allService = $('service').querySelector('option[value=""]');
+    const allAccount = $('account').querySelector('option[value=""]');
+    if (allService) allService.textContent = tr('allServices');
+    if (allAccount) allAccount.textContent = tr('allAccounts');
+    render();
+  }
+  if (noticeState) $('notice').textContent = tr(noticeState.key, noticeState.params);
+}
+for (const code of LOCALES) $('locale-' + code).addEventListener('click', () => setLocale(code));
+setLocale(DEFAULT_LOCALE);

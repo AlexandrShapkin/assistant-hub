@@ -299,12 +299,12 @@ class LocalServerTests(unittest.TestCase):
 
     def test_traversal_and_private_paths(self):
         for path in ("/../README.md", "/%2e%2e/README.md", "/app.mjs/../owner.json",
-                     "/owner.json", "/hub.sqlite3", "/.git/config", "/src/assistant_hub/core/store.py",
+                     "/owner.json", "/hub.sqlite3", "/.git/config", "/src/assistant_hub/core/store.py", "/i18n.mjs?locale=ru",
                      "//index.html", "/index.html?token=anything", "/%2findex.html", "/styles.css%00"):
             self.assertEqual(self.request(path)[0], 404, path)
 
     def test_static_headers_and_safe_ui(self):
-        for path, marker in (("/", b"Synthetic demo"), ("/app.mjs", b"textContent"), ("/styles.css", b"@media")):
+        for path, marker in (("/", b"Synthetic demo"), ("/app.mjs", b"textContent"), ("/i18n.mjs", b"DEFAULT_LOCALE"), ("/styles.css", b"@media")):
             code, data = self.request(path, origin=False)
             self.assertEqual(code, 200)
             self.assertIn(marker, data)
