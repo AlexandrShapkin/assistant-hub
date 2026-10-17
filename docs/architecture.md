@@ -52,3 +52,19 @@ exists. Events, payloads, audit records, and attributes remain local data.
 The core owns contracts and mechanisms. Future provider packages would own
 protocol translation and account semantics, explicitly enabled by applications.
 The core has no dependency on a particular provider, device, UI, or LLM.
+
+## Offline browser preview
+
+The independent [`web/` preview](../web/README.md), scoped to Issue #20 (related
+to #3), uses static HTML, CSS and ES modules without dependencies. Generic
+synthetic events retain source/account/id identity. `view-model.mjs` owns pure
+filtering, sorting, counters and immutable, validated status/simulation updates;
+`app.mjs` binds these to DOM nodes using textContent. There are no provider parsing
+branches, core/backend bindings or dispatch paths.
+
+Draft, review request and approval/rejection are explicitly labelled simulations
+in JavaScript memory only. Refresh resets all state. Local file serving loads
+only preview resources; CSP denies application connections and workers. No
+external resources, storage or service workers exist. Authentication/logout, real
+APIs, public hosting and real browser access to private data are NOT implemented.
+Python session/password proofs are not connected to this UI.

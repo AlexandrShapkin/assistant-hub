@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'none'">
+  <title>Assistant Hub</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip" href="#workspace">Skip to inbox</a>
+  <header class="topbar"><a class="brand" href="./index.html"><span class="logo" aria-hidden="true">a</span>Assistant Hub</a><span class="preview-label">OFFLINE PREVIEW</span><a href="./README.md">About this demo ↗</a></header>
+  <div class="banner"><span class="demo-dot" aria-hidden="true"></span><strong>Synthetic demo — no accounts connected</strong><span>All activity is invented. Changes stay in memory and reset on refresh.</span></div>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Inbox navigation and filters">
+      <button id="filters-toggle" class="filters-toggle" type="button" aria-expanded="false" aria-controls="sidebar-content">Sources and filters <span aria-hidden="true">▾</span></button>
+      <div id="sidebar-content" class="sidebar-content">
+      <p class="eyebrow">YOUR WORKSPACE</p><h1>One place.<br>A clearer picture.</h1><p class="muted intro">A quiet overview of activity across your tools.</p>
+      <div class="section-label">INBOX <button id="reset" class="text-button" type="button">Reset filters</button></div>
+      <div id="statuses" class="nav-group"></div>
+      <div class="section-label">SERVICES</div><div id="sources" class="nav-group"></div>
+      <div class="section-label">ACCOUNTS <span class="muted">fictional</span></div><div id="accounts" class="nav-group"></div>
+      <div class="sidebar-note"><strong>Built around your context</strong><p>Service and account identities travel with every item. No tools are connected in this preview.</p></div>
+      </div>
+    </aside>
+    <main id="workspace" class="inbox" tabindex="-1">
+      <div class="inbox-heading"><div><p class="eyebrow">ACTIVITY OVERVIEW</p><h2>Inbox <span id="count" class="count"></span></h2></div><span class="muted">Sample day · 14 Oct 2026</span></div>
+      <label class="search-label" for="search">Search activity</label><input id="search" type="search" placeholder="Search titles, content, services…" autocomplete="off">
+      <div class="toolbar"><label>Priority <select id="priority"><option value="">All priorities</option><option value="important">Important</option><option value="normal">Normal</option></select></label><label>Sort <select id="sort"><option value="latest">Latest first</option><option value="important">Important first</option></select></label></div>
+      <p id="results" class="muted result-label" role="status"></p><div id="items" class="items" aria-label="Activity items"></div>
+    </main>
+    <aside id="inspector" class="inspector" aria-label="Selected item details"></aside>
+  </div>
+  <footer>Offline by design · Synthetic data only · No authentication, connected accounts, or dispatch</footer>
+  <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+  <noscript>This offline preview requires JavaScript modules. No accounts or private data are available.</noscript>
+</body>
+</html>
