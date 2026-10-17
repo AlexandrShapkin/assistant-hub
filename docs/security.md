@@ -421,3 +421,29 @@ proxies, cookies, retries or returned-URL traversal. Strict duplicate-free JSON,
 compatibility remains unverified. Cache failures erase the local cached reference;
 local clear/revoke does not invalidate tokens at GitHub or erase caller copies.
 No private API reads, dispatch, listener or production deployment is added.
+
+## Manual weekly iCalendar import (Issue #41)
+
+Owner-selected `.ics` files are uploaded by an authenticated browser only to
+`POST /api/calendar/import` on the exact localhost origin, with existing bearer
+and strict Host/Origin checks before reading the request body. The maximum
+JSON upload request is 128 KiB; the iCalendar payload itself is capped at
+96 KiB. All other JSON endpoints retain their prior small-body limit.
+Unauthenticated access to the weekly list is denied.
+
+The parser uses only stdlib text, datetime and ZoneInfo; no iCalendar content
+causes an HTTP fetch, remote subscription, command execution or HTML execution.
+Unfolded line counts, line lengths, component nesting, unique UIDs, duration,
+week boundaries and date/time formats are strictly bounded. It does not
+expand recurrence or VALARM payloads. It rejects unsupported forms rather than
+silently fabricating classes, and renders provider text via `textContent`.
+Events are considered private user-provided data (unlike public RSS and GitHub).
+
+Every import is a single SQLite transaction, with stable per-week UID hashes,
+audit counts, and replacement/removal limited to the specified week. Deleting
+an absent class may remove its local status; prior weeks are preserved. Last
+import timestamps describe local freshness, not university publication time.
+The upload is manual only; automatic polling of university timetable pages is
+not implemented, particularly where site crawling is disallowed by robots.txt.
+Test fixtures contain only synthetic classes; real exports may require a
+separate reviewed compatibility update. No private source URL is committed.

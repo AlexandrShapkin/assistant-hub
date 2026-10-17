@@ -14,6 +14,7 @@ import warnings
 
 from .adapters.github_public import GitHubPublicAdapter
 from .adapters.public_feed import PublicFeedCatalog
+from .calendar_import import parse_ical, MAX_ICAL_BYTES, SERVICE as CALENDAR_SERVICE, ACCOUNT as CALENDAR_ACCOUNT
 from .feed_schedule import FeedSchedule, MIN_INTERVAL, MAX_INTERVAL
 from .core.contracts import PollError, RateLimitPollError
 from .core.demo import BulletinAdapter, DemoAdapter
@@ -159,11 +160,11 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(data)
 
-    def body(self, headers, keys):
+    def body(self, headers, keys, max_size=MAX_BODY, max_field_length=1024):
         if headers.get("content-type") != "application/json":
             raise ValueError("invalid content type")
         length = headers.get("content-length", "")
-        if not length.isascii() or not length.isdecimal() or not 0 < int(length) <= MAX_BODY:
+        if not length.isascii() or not length.isdecimal() or not 0 < int(length) <= max_size:
             raise ValueError("invalid body size")
         data = self.rfile.read(int(length))
         if len(data) != int(length):
@@ -172,7 +173,7 @@ class Handler(BaseHTTPRequestHandler):
                          parse_constant=reject_constant)
         if type(obj) is not dict or set(obj) != set(keys):
             raise ValueError("invalid object")
-        if any(type(v) is not str or not v or len(v) > 1024 for v in obj.values()):
+        if any(type(v) is not str or not v or len(v) > max_field_length for v in obj.values()):
             raise ValueError("invalid fields")
         return obj
 
@@ -240,8 +241,9 @@ class Handler(BaseHTTPRequestHandler):
                          "no private accounts or outgoing actions").encode())
                 self.reply(200, data, content_type)
                 return
-        routes = {"GET": {"/api/inbox", "/api/services", "/api/session"},
-                  "POST": {"/api/login", "/api/collect", "/api/status", "/api/logout"}}
+        routes = {"GET": {"/api/inbox", "/api/services", "/api/session", "/api/calendar/weeks"},
+                  "POST": {"/api/login", "/api/collect", "/api/status", "/api/logout",
+                           "/api/calendar/import"}}
         if self.path not in routes.get(self.command, set()):
             self.reply(404, {"error": "request denied"})
             return
@@ -261,8 +263,13 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/session":
             self.reply(200, {"subject": identity.subject, "scope": identity.scope})
         elif self.path == "/api/services":
-            self.reply(200, [{"service": s, "account": a, "capabilities": ["read"],
-                              "synthetic": s not in ("github-public", "public-feed")} for s, a in self.server.bindings])
+            bindings = [{"service": s, "account": a, "capabilities": ["read"],
+                         "synthetic": s not in ("github-public", "public-feed")}
+                        for s, a in self.server.bindings]
+            # Import-only: never offer this identity to the automatic/manual poller.
+            bindings.append({"service": CALENDAR_SERVICE, "account": CALENDAR_ACCOUNT,
+                             "capabilities": [], "synthetic": False})
+            self.reply(200, bindings)
         elif self.path == "/api/logout":
             self.body(h, ())
             self.server.sessions.revoke(h["authorization"][7:])
@@ -272,6 +279,12 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 if self.path == "/api/inbox":
                     self.reply(200, store.inbox_with_status())
+                elif self.path == "/api/calendar/weeks":
+                    self.reply(200, store.calendar_weeks())
+                elif self.path == "/api/calendar/import":
+                    obj = self.body(h, ("ical",), 128 * 1024, MAX_ICAL_BYTES)
+                    week, lessons = parse_ical(obj["ical"])
+                    self.reply(200, store.import_calendar_week(week, lessons))
                 elif self.path == "/api/collect":
                     obj = self.body(h, ("service", "account"))
                     if (obj["service"], obj["account"]) not in self.server.bindings:

@@ -58,7 +58,7 @@ Unknown evidence remains unknown; don't infer CI success from local execution.
     python scripts/check_public_tree.py --include-untracked
     git diff --check
 
-Do not commit: VPN subscriptions, API keys, tokens, user messages, environment
+Do not commit private iCalendar uploads, university class schedules or personal group identifiers.\nDo not commit: VPN subscriptions, API keys, tokens, user messages, environment
 files, session storage, personal addresses/identifiers, local SQLite databases
 or production configuration. No automatic installing providers, fetching user
 data, external message sending, hidden dispatch or privileged side effects.

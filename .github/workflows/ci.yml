@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: '22'
       - run: |
-          for module in web/*.mjs web/tests/*.mjs; do
+          for module in web/*.mjs web/tests/*.mjs src/assistant_hub/local_web/*.mjs; do
             node --check "$module"
           done
       - run: node --test web/tests/*.test.mjs

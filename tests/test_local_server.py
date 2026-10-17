@@ -96,6 +96,52 @@ class LocalServerTests(unittest.TestCase):
         self.assertEqual(self.request("/api/session", origin=False),
                          (200, {"subject": "owner", "scope": "local-web"}))
 
+    def test_calendar_manual_import_authenticated_atomic_and_local_only(self):
+        from tests.test_calendar_import import calendar, event
+        from assistant_hub.calendar_import import SERVICE, ACCOUNT
+        raw = calendar(event("synthetic-uid"))
+        self.assertEqual(self.request("/api/calendar/weeks")[0], 401)
+        self.assertEqual(self.request("/api/calendar/import", {"ical": raw})[0], 401)
+        self.login()
+        self.assertEqual(self.request("/api/calendar/import", {"ical": raw}, origin=False)[0], 403)
+        self.assertEqual(self.request("/api/calendar/import", method="GET")[0], 404)
+        self.assertEqual(self.request("/api/calendar/weeks")[1], [])
+        self.assertEqual(self.collect(SERVICE, ACCOUNT)[0], 400)  # never fetches outside data
+        code, result = self.request("/api/calendar/import", {"ical": raw})
+        self.assertEqual((code, result["week"], result["count"], result["added"]),
+                         (200, "2026-10-12", 1, 1))
+        week = self.request("/api/calendar/weeks")[1][0]
+        self.assertEqual((week["week"], week["count"]), ("2026-10-12", 1))
+        inbox = self.request("/api/inbox")[1]
+        self.assertEqual(len(inbox), 1)
+        self.assertEqual(inbox[0]["attributes"]["time_local"], "11:20–12:50")
+        self.assertEqual(inbox[0]["status"], "new")
+        self.assertEqual(self.request("/api/calendar/import", {"ical": raw})[1]["added"], 0)
+        self.assertEqual(self.request("/api/calendar/import", {"ical": raw})[1]["changed"], 0)
+        self.assertEqual(self.status("done", SERVICE, ACCOUNT, inbox[0]["external_id"])[0], 200)
+        newer = calendar(event("synthetic-uid", title="Updated class"))
+        self.assertEqual(self.request("/api/calendar/import", {"ical": newer})[1]["changed"], 1)
+        edited = self.request("/api/inbox")[1]
+        self.assertEqual(edited[0]["title"], "Updated class")
+        self.assertEqual(edited[0]["status"], "done")
+
+    def test_calendar_rejects_oversize_recurring_or_wrong_shape_without_writes(self):
+        from tests.test_calendar_import import calendar, event
+        self.login()
+        good = calendar(event("uid"))
+        for bad in (
+            {"ical": ""},
+            {"ical": "something else"},
+            {"ical": good.replace("END:VEVENT", "RRULE:FREQ=WEEKLY\\r\\nEND:VEVENT")},
+            {"ical": good, "remote_url": "https://university.example/"},
+            {"ical": 42},
+            {"ical": good + "x" * 100000},
+        ):
+            with self.subTest(bad=tuple(bad)):
+                self.assertEqual(self.request("/api/calendar/import", bad)[0], 400)
+        self.assertEqual(self.request("/api/calendar/weeks")[1], [])
+        self.assertEqual(self.request("/api/inbox")[1], [])
+
     def test_wrong_and_invalid_passwords_generic(self):
         for value in ("short", "wrong-synthetic-password", "", 42, None):
             code, data = self.request("/api/login", {"password": value})
@@ -116,7 +162,10 @@ class LocalServerTests(unittest.TestCase):
     def test_get_without_origin_with_token(self):
         self.login()
         self.assertEqual(self.request("/api/inbox", origin=False), (200, []))
-        self.assertEqual(len(self.request("/api/services", origin=False)[1]), 4)
+        bindings = self.request("/api/services", origin=False)[1]
+        self.assertEqual(len(bindings), 5)
+        self.assertIn({"service": "local-calendar", "account": "weekly-ics",
+                       "capabilities": [], "synthetic": False}, bindings)
 
     def test_get_foreign_origin_rejected(self):
         self.login()

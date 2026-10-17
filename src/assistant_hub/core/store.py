@@ -6,6 +6,7 @@ import sqlite3
 import stat
 from dataclasses import asdict
 from .contracts import ActionIntent, Decision, PollResult
+from ..calendar_import import SERVICE as CALENDAR_SERVICE, ACCOUNT as CALENDAR_ACCOUNT
 from .conformance import validate_poll_result
 
 
@@ -45,6 +46,9 @@ class Store:
             CREATE TABLE IF NOT EXISTS audit (
                 id INTEGER PRIMARY KEY, timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
                 kind TEXT NOT NULL, subject TEXT NOT NULL, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS calendar_weeks (
+                week_start TEXT PRIMARY KEY, imported_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                event_count INTEGER NOT NULL);
         ''')
 
     def close(self) -> None:
@@ -70,6 +74,60 @@ class Store:
                             (service, account, result.cursor))
             self._audit("collect", encode([service, account]), encode({"inserted": count}))
         return count
+
+    def import_calendar_week(self, week: str, events: tuple) -> dict:
+        """Replace just one owner-imported week atomically; retain other weeks."""
+        if (not isinstance(week, str) or len(week) != 10 or
+                not isinstance(events, tuple) or not 1 <= len(events) <= 80 or
+                len({event.external_id for event in events}) != len(events) or
+                any(event.service_id != CALENDAR_SERVICE or
+                    event.account_id != CALENDAR_ACCOUNT or
+                    event.kind != "calendar.lesson" or
+                    event.attributes.get("week_start") != week for event in events)):
+            raise ValueError("invalid weekly calendar snapshot")
+        with self.db:
+            rows = self.db.execute(
+                "SELECT external_id, data FROM events WHERE service=? AND account=?",
+                (CALENDAR_SERVICE, CALENDAR_ACCOUNT)).fetchall()
+            previous = {row["external_id"]: row["data"] for row in rows
+                        if json.loads(row["data"]).get("attributes", {}).get("week_start") == week}
+            current = set()
+            added = changed = 0
+            for event in events:
+                data = asdict(event)
+                data["timestamp"] = event.timestamp.isoformat()
+                serialized = encode(data)
+                key = event.external_id
+                current.add(key)
+                if key not in previous:
+                    self.db.execute("INSERT INTO events VALUES (?, ?, ?, ?)",
+                                    (CALENDAR_SERVICE, CALENDAR_ACCOUNT, key, serialized))
+                    added += 1
+                elif previous[key] != serialized:
+                    self.db.execute(
+                        "UPDATE events SET data=? WHERE service=? AND account=? AND external_id=?",
+                        (serialized, CALENDAR_SERVICE, CALENDAR_ACCOUNT, key))
+                    changed += 1
+            removed = previous.keys() - current
+            for key in removed:
+                self.db.execute("DELETE FROM event_states WHERE service=? AND account=? AND external_id=?",
+                                (CALENDAR_SERVICE, CALENDAR_ACCOUNT, key))
+                self.db.execute("DELETE FROM events WHERE service=? AND account=? AND external_id=?",
+                                (CALENDAR_SERVICE, CALENDAR_ACCOUNT, key))
+            self.db.execute(
+                "INSERT INTO calendar_weeks(week_start, event_count) VALUES (?, ?) "
+                "ON CONFLICT(week_start) DO UPDATE SET "
+                "imported_at=CURRENT_TIMESTAMP, event_count=excluded.event_count",
+                (week, len(events)))
+            result = {"week": week, "count": len(events), "added": added,
+                      "changed": changed, "removed": len(removed)}
+            self._audit("calendar-import", week, encode(result))
+        return result
+
+    def calendar_weeks(self) -> list[dict]:
+        return [dict(row) for row in self.db.execute(
+            "SELECT week_start AS week, imported_at, event_count AS count "
+            "FROM calendar_weeks ORDER BY week_start DESC LIMIT 104")]
 
     def _audit(self, kind: str, subject: str, data: str) -> None:
         self.db.execute("INSERT INTO audit(kind, subject, data) VALUES (?, ?, ?)",
