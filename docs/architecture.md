@@ -66,6 +66,6 @@ Draft, review request and approval/rejection are explicitly labelled simulations
 in JavaScript memory only. Refresh resets all state. Local file serving loads
 only preview resources; CSP denies application connections and workers. No
 external resources, storage or service workers exist. Authentication/logout, real APIs and browser access to private data are NOT
-implemented. GitHub Pages can serve an explicitly allowlisted set of synthetic
+implemented. GitHub Pages serves an explicitly allowlisted set of synthetic
 static files only; it does not expose the Python application or device agents.
 Python session/password proofs are not connected to this UI.

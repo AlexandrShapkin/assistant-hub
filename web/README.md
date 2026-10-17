@@ -1,5 +1,8 @@
 # Assistant Hub offline UI preview
 
+**Live static synthetic demo:** https://alexandrshapkin.github.io/assistant-hub/
+This is not an authenticated product and cannot access real accounts.
+
 Synthetic demo only, owned by Issue #20 (related to #3). No accounts connected.
 All names, accounts, events, proposed drafts and device samples are invented.
 

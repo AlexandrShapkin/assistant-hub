@@ -48,6 +48,8 @@ decision, or grant future permission. All displayed demo content is fake.
 
 ## Offline browser preview
 
+**[Open the live synthetic UI preview](https://alexandrshapkin.github.io/assistant-hub/)** (works on phones; public demo only, no connected accounts).
+
 A provider-neutral, static [Assistant Hub preview](web/README.md) demonstrates an
 inbox, account/service filters and an explicit draft/review simulation. View locally:
 

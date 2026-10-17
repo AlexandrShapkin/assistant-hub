@@ -19,8 +19,9 @@
 ## M2 — Experience
 
 - [#3](https://github.com/AlexandrShapkin/assistant-hub/issues/3) — authenticated self-hosted unified inbox.
-- [#20](https://github.com/AlexandrShapkin/assistant-hub/issues/20) — [offline synthetic UI preview](../web/README.md), related to #3; implementation prepared for review, not marked complete before merge. No authentication or real API access.
-- [#22](https://github.com/AlexandrShapkin/assistant-hub/issues/22) — publish only verified synthetic UI assets through GitHub Pages.
+- [#24](https://github.com/AlexandrShapkin/assistant-hub/issues/24) — RU/EN localization for the synthetic UI.
+- [#20](https://github.com/AlexandrShapkin/assistant-hub/issues/20) — [offline synthetic UI preview](../web/README.md), related to #3; implemented and verified in PR #21. No authentication or real API access.
+- [#22](https://github.com/AlexandrShapkin/assistant-hub/issues/22) — verified public static preview from PR #23; no private data or backend.
 
 ## M3 — Automation
 
