@@ -1,7 +1,7 @@
 # Architecture
 
 Status: pre-alpha local prototype; [Adapter SDK v1](adapter-sdk.md) is the
-versioned polling boundary. No real providers or dispatch exist.
+versioned polling boundary. An optional public GitHub reader exists; no dispatch exists.
 
 `CLI -> Hub -> Registry -> Adapter.poll(account, cursor)` collects a `PollResult`.
 The registry contains only explicitly supplied adapter instances. There is no
@@ -81,7 +81,7 @@ a verifier and DB, binds only 127.0.0.1 and serves an allowlisted `local_web/`
 application. The public `web/` preview and Pages publication remain independent.
 
 `local_web/app.mjs → local_server → Hub → Registry → synthetic Adapter.poll → Store`
-uses existing mechanisms, with no alternate collection or dispatch path. Only
+uses existing mechanisms, with no alternate collection or dispatch path. By default only
 DemoAdapter and BulletinAdapter are registered, with explicit per-account read
 bindings. `/api/services` lists these synthetic bindings. GET `/api/inbox`,
 `/api/services`, `/api/session` require a scoped in-memory bearer session;
@@ -104,4 +104,20 @@ retains its own thread safety. This deliberately favors a small single-process
 local demo over throughput. Cursors, deduplication and event states survive
 restart; passwords and bearer sessions are never stored in the DB. The browser
 module retains its token in memory, uses textContent for dynamic event data,
-and reauthenticates after refresh. No real sources, sends or model calls exist.
+and reauthenticates after refresh. The optional GitHub source described below performs public reads; no sends or model calls exist.
+
+## Public GitHub snapshot provider (#28)
+
+`adapters/github_public.py` is an explicitly instantiated SDK v1 provider with
+only the low-risk nonmutating `read` capability. The optional localhost serve
+flag registers one lowercased owner/repo account with an explicit read Binding;
+Hub, Registry and Store need no provider-specific branches. Services identify
+this provider as `synthetic: false`. Repository metadata must confirm public
+visibility and matching identity before any source endpoint is read.
+
+Every poll returns a complete bounded snapshot or typed PollError. Versioned
+external IDs distinguish issue, pull and workflow identities plus UTC updated
+instant; workflow IDs also include attempt/status. Store's existing transaction
+atomically commits events, `latest-v1` cursor and audit, and deduplicates replay.
+The rolling 30-per-source snapshot can miss updates and is not lossless history.
+No background collection, pagination, dispatch or GitHub authentication exists.

@@ -1,6 +1,6 @@
 # Security assumptions and limitations
 
-This is not production software. It has no external dispatch, external network access,
+This is not production software. It has no external dispatch; only the opt-in public GitHub reader has external network access. It has no
 real provider credentials or language-model permission path. The independent
 `security` package checks session request proofs and a synthetic owner-password
 login admission proof, now also used by the separate localhost application below.
@@ -279,7 +279,7 @@ exact Host, no cookie, an optional exact Origin and exact `Authorization: Bearer
 proof validated by `SessionManager.authorize(mode='bearer', scope='local-web')`.
 No Origin is fabricated. Bearer headers are deliberately added by the module;
 they are not ambient cookie authority. GET never collects, updates or logs out.
-`/healthz` is public and contains only `synthetic-only`; the public application
+`/healthz` is public and contains only a source-mode label; the public application
 shell contains no event content. Every data API requires authentication.
 
 Tokens are delivered only in login JSON and held only in module memory, never
@@ -306,11 +306,39 @@ Composite service/account/event IDs isolate rows. Event existence is checked
 before upsert; status and audit (including authenticated owner actor) commit or
 roll back together. Repeating a status keeps one current state row and appends
 an audit observation. State remains plaintext and owner-editable. No executor
-or event-upload endpoint exists; collection uses only explicitly read-bound
-DemoAdapter/BulletinAdapter. No real provider is linked.
+or event-upload endpoint exists; collection uses explicitly read-bound
+DemoAdapter/BulletinAdapter and optionally the public GitHub reader.
 
 Validation: `tests/test_local_server.py` uses ephemeral real loopback HTTP,
 private temporary directories and a synthetic test password. Run the repository
 checks plus `node --check src/assistant_hub/local_web/app.mjs` and
 `node --test web/tests/*.test.mjs`. These tests require a host permitting local
 sockets; a sandbox socket denial is a validation blocker, not evidence of success.
+
+## Anonymous public GitHub boundary (#28)
+
+Opt-in scope: public repository metadata, Issues, PRs and workflow runs, manual
+collection in the authenticated localhost app, persisted to local SQLite.
+Non-goals: private GitHub App authorization/revocation (parent #8), repository
+file downloads, tokens, outgoing actions, deployments or production readiness.
+Acceptance is bounded normalization, replay deduplication, atomic failure and
+existing bearer plus same-origin checks; validation uses offline mocked transport
+and the repository Python/Node checks.
+
+Only strict ASCII owner/repo segments configure fixed HTTPS api.github.com
+paths. The stdlib GET transport uses an eight-second timeout, no proxy environment,
+ambient authentication, cookies, redirects or retries. Each response is bounded
+to 2 MiB and each source to 30 items; text is at most 2400 characters and other
+stored fields are bounded. Public metadata is checked on every poll. HTTP errors
+are typed and surfaced as generic 502/429 without upstream text or stack traces.
+No endpoint result is persisted until all endpoints validate.
+
+Provider JSON, titles and bodies remain untrusted data, never permissions or
+instructions. Same-repository HTTPS github.com item URLs must match the item's
+validated numeric identity; arbitrary URLs are rejected. Local UI renders dynamic
+text with textContent and does not interpret provider HTML. Login/bearer and
+strict Host/Origin proofs precede collection. Startup, GET, and background tasks
+never fetch GitHub. No secrets or GitHub credentials are accepted. Public data
+is persisted as plaintext locally; a previously public repository becoming private
+does not erase historical local snapshots. Anonymous rate limits and rolling
+snapshot gaps remain expected limitations.

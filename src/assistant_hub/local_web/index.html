@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Assistant Hub · Local synthetic workspace</title>
+  <title>Assistant Hub · Local workspace</title>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.mjs"></script>
 </head>
 <body>
   <header><span class="logo" aria-hidden="true">a</span><strong>Assistant Hub</strong><span>LOCAL WORKSPACE</span></header>
-  <div class="banner"><strong>Synthetic demo — no real sources linked</strong><p>Workflow statuses persist locally. Nothing is sent. Refresh requires login again.</p></div>
+  <div class="banner"><strong id="source-banner">Synthetic demo — synthetic-only; no real sources linked</strong><p>Workflow statuses persist locally. Nothing is sent. Refresh requires login again.</p></div>
   <p id="notice" role="status" aria-live="polite"></p>
   <section id="login-panel" class="card">
     <h1>Your local workspace</h1><p>Sign in with the owner password enrolled on this computer.</p>
@@ -20,13 +20,13 @@
       <label for="service">Service</label><select id="service"></select>
       <label for="account">Account</label><select id="account"></select>
       <label for="status-filter">Workflow status</label><select id="status-filter"><option value="">All statuses</option><option>new</option><option>review</option><option>deferred</option><option>done</option></select>
-      <button id="collect" type="button">Collect synthetic events</button><p>Collects one page for the selected synthetic account, or all accounts if none selected.</p>
+      <button id="collect" type="button">Collect events</button><p>Collects one page for the selected account, or all accounts if none selected.</p>
       <button id="logout" type="button">Log out</button>
     </aside>
     <section class="card"><p class="eyebrow">ACTIVITY OVERVIEW</p><h2>Inbox</h2><label for="search">Search activity</label><input id="search" type="search" placeholder="Search titles, content, identities…"><p id="count" role="status"></p><div id="items"></div></section>
     <aside class="card" id="details" aria-label="Selected item details"><h2>Item details</h2><p>Select an item to review its workflow status.</p></aside>
   </main>
-  <footer>Pre-alpha · Localhost only · Synthetic data · No dispatch</footer>
+  <footer>Pre-alpha · Localhost only · Public or synthetic data · No dispatch</footer>
   <noscript>JavaScript modules are required for this local application.</noscript>
 </body>
 </html>

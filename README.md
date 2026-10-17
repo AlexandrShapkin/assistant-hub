@@ -2,19 +2,20 @@
 
 **Pre-alpha, nonproduction scaffold.** A Python 3.11+ standard-library-only
 prototype for collecting account-scoped events and recording permission decisions.
-Both adapters are **fake, synthetic fixtures**. There are no external network calls,
+The default adapters are **fake, synthetic fixtures**. Optional public GitHub reads
+are available only in the localhost app; there are no outgoing actions,
 provider credentials, outgoing sends, model integrations, or external action executors.
 
 The platform is independent of any messaging, mail, social, source-control, or
 device provider. Earlier isolated remote-demo experiments informed the boundary;
-no deployment configuration, private data, or provider integration is included.
+no deployment configuration or private data is included.
 
 The independent [request authorization primitives](docs/security.md) provide
 bounded in-memory bearer/browser sessions and CSRF proof checks in offline tests.
 An owner-password verifier admits scoped sessions for a separate localhost-only
 application (Issue #26). The separate [offline UI preview](web/README.md)
 uses invented data and in-memory simulations only. The local application connects
-a browser to a synthetic-only Python API and SQLite. Core policy and audit-only
+a browser to a Python API and SQLite (synthetic by default). Core policy and audit-only
 review remain separate.
 
 ## Quickstart
@@ -76,8 +77,8 @@ cookies, browser storage or URL tokens. The browser must send an exact Origin
 on POST; if it omits Origin the request fails closed. Safe GET may omit Origin.
 See [security limits](docs/security.md#localhost-application-issue-26).
 
-This remains a single-owner, single-process, synthetic-only local demo. No
-public interface, production/public TLS setup, real provider links, provider
+This remains a single-owner, single-process local pre-alpha demo. No
+public interface, production/public TLS setup, private provider links, provider
 credentials or message sending exist. Do not forward the port or deploy it to
 a VPS. The public Pages/offline `web/` preview stays independent and unchanged.
 
@@ -145,3 +146,26 @@ private files are not evidence of public-tree safety; review what is staged.
 
 No license has been selected by the owner, so no LICENSE file or open-source
 license grant is provided. Public visibility alone does not grant reuse rights.
+
+## Optional public GitHub reader (Issue #28)
+
+Append `--github-public-repo OWNER/REPO` to the existing **local_server serve**
+command, for example:
+
+```sh
+PYTHONPATH=src python3 -m assistant_hub.local_server serve --verifier "$HOME/.local/share/assistant-hub-private/owner.json" --db "$HOME/.local/share/assistant-hub-private/hub.sqlite3" --port 18770 --github-public-repo octocat/Hello-World
+```
+
+Disabled by default. Sign in and explicitly collect `github-public`; startup and
+GET requests never poll GitHub. One canonical owner/repo account reads public
+repository metadata, Issues, PRs and Actions runs through the official API and
+stores normalized events in SQLite. No GitHub login, tokens, private repositories,
+repository file downloads, outgoing actions or production readiness are provided.
+Synthetic adapters and the separate static Pages demo remain available unchanged.
+
+Each manual poll reads at most 30 records per source (issues, PRs, runs), with no
+pagination or retries. This is **not lossless incremental history**: rolling
+snapshots can miss updates and anonymous API requests are rate limited. Issues
+and PRs sort by updated time; Actions uses GitHub's default run ordering. The
+`latest-v1` cursor marks snapshot collection, not a historical watermark. Replays
+deduplicate; changed update timestamps produce independent event versions.

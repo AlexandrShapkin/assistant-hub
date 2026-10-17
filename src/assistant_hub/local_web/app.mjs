@@ -101,7 +101,7 @@ function render() {
     button.addEventListener('click', () => { selected = identity(event); details(); });
     $('items').append(button);
   }
-  if (!visible.length) $('items').append(element('p', 'No matching items. Collect synthetic events to populate the inbox.'));
+  if (!visible.length) $('items').append(element('p', 'No matching items. Collect events to populate the inbox.'));
   details();
 }
 async function refresh() {
@@ -129,7 +129,7 @@ $('login-form').addEventListener('submit', event => {
     await refresh();
     $('login-panel').hidden = true;
     $('workspace').hidden = false;
-    notice('Signed in. Synthetic sources only.');
+    notice('Signed in. Collection is read-only and manual.');
   });
 });
 $('service').addEventListener('change', () => { accounts(); render(); });
@@ -139,7 +139,7 @@ $('collect').addEventListener('click', () => run($('collect'), async () => {
     await api('/api/collect', {service: binding.service, account: binding.account});
   }
   await refresh();
-  notice('Synthetic page collected. Repeat collection advances saved cursors and deduplicates.');
+  notice('Page collected. Repeated collection deduplicates; public snapshots can miss updates.');
 }));
 $('logout').addEventListener('click', () => run($('logout'), async () => {
   await api('/api/logout', {});
