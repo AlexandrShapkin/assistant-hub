@@ -9,6 +9,11 @@ The platform is independent of any messaging, mail, social, source-control, or
 device provider. Earlier isolated remote-demo experiments informed the boundary;
 no deployment configuration, private data, or provider integration is included.
 
+The independent [request authorization primitives](docs/security.md) provide
+bounded in-memory bearer/browser sessions and CSRF proof checks in offline tests.
+They do not provide login or an authenticated web UI; no web UI or HTTP server
+exists in this repository. Core policy and audit-only review remain separate.
+
 ## Quickstart
 
 From the repository root, without installation or third-party packages:
