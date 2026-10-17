@@ -1,0 +1,1 @@
+"""Explicitly configured provider adapters."""
