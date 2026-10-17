@@ -142,3 +142,16 @@ no established cursor resets to None. Every item, including items beyond the
 40-event output cap, is validated before returning the tuple. Snapshots are
 bounded and may miss history. No scheduling, retries or content URL traversal.
 The independent public Pages synthetic preview remains unchanged.
+
+## Isolated GitHub App auth foundation (Issue #34)
+
+`security/github_app.py` supplies immutable app/installation/repository config,
+redacted JWT and installation-token values, an injectable signer/REST transport,
+and a locked memory-only token manager. An optional explicitly configured system
+OpenSSL signer supports RSA PEM keys in trusted owner-only storage outside Git.
+The sole implemented credentialed request creates a tightly scoped installation
+token; response scope/expiry validation precedes caching. Local revoke/clear is
+not remote revocation. There is no adapter registration, server route, account
+configuration persistence or private repository read integration. Existing public
+GitHub collection and the offline `web/` demo remain unchanged. See
+[setup and limitations](github-app-setup.md); parent #8 remains open.

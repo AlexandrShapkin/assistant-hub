@@ -189,3 +189,16 @@ for display. This is a **rolling snapshot, not lossless synchronization**.
 There is no scheduling, retry/backoff, discovery or provider action. The default
 app remains synthetic, and public `web/` / GitHub Pages remains unchanged.
 See [security boundaries](docs/security.md#public-feed-reader-issue-32).
+
+## GitHub App auth foundation (Issue #34)
+
+An isolated stdlib authentication module provides configured app/installation/
+repository bindings, redacted RS256 JWTs, strictly scoped installation-token
+requests and a locked memory-only cache. Signing can use an explicitly selected
+system OpenSSL executable and an owner-only RSA key outside Git. All tests use
+fake signers/transports and synthetic tokens; no real app registration, live
+credential exchange or private repository integration has been verified. It has
+no server or adapter binding. Local clear/revoke does not revoke at GitHub.
+Key custody, rotation and production vault design remain unresolved. See
+[owner setup and security limits](docs/github-app-setup.md). Public collection
+and the synthetic `web/` preview remain unchanged; parent Issue #8 remains open.

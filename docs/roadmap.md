@@ -16,6 +16,7 @@
 - [#7](https://github.com/AlexandrShapkin/assistant-hub/issues/7) — general site, RSS and API ingestion; remains OPEN until scheduling/backoff and general site APIs are completed.
 - [#32](https://github.com/AlexandrShapkin/assistant-hub/issues/32) — child of #7: optional manually polled public HTTPS RSS2/Atom/JSON Feed snapshots; owner-authenticated localhost collection, bounded reads and conditional validators, no actions.
 - [#8](https://github.com/AlexandrShapkin/assistant-hub/issues/8) — parent GitHub adapter scope remains open for private GitHub App authentication and revocation.
+- [#34](https://github.com/AlexandrShapkin/assistant-hub/issues/34) — child of #8: isolated GitHub App installation auth foundation, fake-only validation; no registered app, live exchange or private adapter. Parent #8 remains open. See [setup limits](github-app-setup.md).
 - [#28](https://github.com/AlexandrShapkin/assistant-hub/issues/28) — optional anonymous public GitHub repository snapshots in the authenticated localhost app; bounded manual reads, no private access or dispatch.
 
 ## M2 — Experience
