@@ -1,4 +1,4 @@
-"""Offline request authorization primitives; no login, server, or dispatch."""
+"""Offline request authorization primitives; no server or dispatch."""
 from dataclasses import dataclass, field
 import hashlib
 import hmac
@@ -75,7 +75,7 @@ class SessionManager:
                 del self._sessions[key]
 
     def issue(self, subject, *, mode, scope):
-        """Trusted issuance only, after a future external authentication step."""
+        """Trusted issuance only, after a trusted authentication step."""
         if (mode not in ("bearer", "cookie") or
                 any(not isinstance(v, str) or not v.strip() or len(v) > 256
                     for v in (subject, scope))):

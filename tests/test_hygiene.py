@@ -10,9 +10,11 @@ spec.loader.exec_module(hygiene)
 class HygieneTests(unittest.TestCase):
     def test_sensitive_paths(self):
         for path in (".env", "a/.env.local", "a/private.key", "a/cache.sqlite3", "a/test.session",
-                     ".aws/config", "personal-data/messages.json", "../outside", "/outside"):
+                     "credentials.json", "tests/credentials.json", "tests/test_credentials.py.bak",
+                     "src/other/credentials.py", ".aws/config", "personal-data/messages.json", "../outside", "/outside"):
             self.assertTrue(hygiene.unsafe_path(path), path)
-        for path in ("README.md", "src/assistant_hub/core/store.py", ".github/workflows/ci.yml"):
+        for path in ("README.md", "src/assistant_hub/security/credentials.py",
+                     "tests/test_credentials.py", "src/assistant_hub/core/store.py", ".github/workflows/ci.yml"):
             self.assertFalse(hygiene.unsafe_path(path), path)
 
     def test_secret_signatures(self):
