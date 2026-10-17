@@ -69,3 +69,39 @@ external resources, storage or service workers exist. Authentication/logout, rea
 implemented. GitHub Pages serves an explicitly allowlisted set of synthetic
 static files only; it does not expose the Python application or device agents.
 Python session/password proofs are not connected to this UI.
+
+
+## Local authenticated vertical slice (Issue #26)
+
+The independent `local_server` entry point provides bootstrap and serve commands
+using only Python 3.11's standard library. See the [root setup commands](../README.md#local-authenticated-application-issue-26)
+and [request boundary](security.md#localhost-application-issue-26). Bootstrap uses
+interactive double `getpass` and VerifierStore's exclusive creation. Serve requires
+a verifier and DB, binds only 127.0.0.1 and serves an allowlisted `local_web/`
+application. The public `web/` preview and Pages publication remain independent.
+
+`local_web/app.mjs → local_server → Hub → Registry → synthetic Adapter.poll → Store`
+uses existing mechanisms, with no alternate collection or dispatch path. Only
+DemoAdapter and BulletinAdapter are registered, with explicit per-account read
+bindings. `/api/services` lists these synthetic bindings. GET `/api/inbox`,
+`/api/services`, `/api/session` require a scoped in-memory bearer session;
+POST `/api/login` authenticates through LoginService. POST `/api/collect`,
+`/api/status`, `/api/logout` require both bearer authorization and strict
+Host/Origin proof. Safe GET shares duplicate-free header/Host validation but
+allows absent Origin because browser fetch normally omits it. No cookies or
+CORS fallback. The only public endpoints are static assets and minimal healthz.
+
+Store adds `event_states(service, account, external_id, status, updated_at)` with
+a composite primary key and allowed-status SQL constraint. `set_status` requires
+an existing event; parameterized upsert and actor audit are one transaction.
+`inbox()` retains its previous source dictionaries; `inbox_with_status()` joins
+state and supplies default `new` without rewriting source events. No workflow
+status changes intent decisions, policy or executor authority.
+
+A shared server lock serializes request authorization and operations; each Store
+connection lives within a request thread and is closed afterward. SessionManager
+retains its own thread safety. This deliberately favors a small single-process
+local demo over throughput. Cursors, deduplication and event states survive
+restart; passwords and bearer sessions are never stored in the DB. The browser
+module retains its token in memory, uses textContent for dynamic event data,
+and reauthenticates after refresh. No real sources, sends or model calls exist.

@@ -2,7 +2,7 @@
 
 **Pre-alpha, nonproduction scaffold.** A Python 3.11+ standard-library-only
 prototype for collecting account-scoped events and recording permission decisions.
-Both adapters are **fake, synthetic fixtures**. There are no network calls,
+Both adapters are **fake, synthetic fixtures**. There are no external network calls,
 provider credentials, outgoing sends, model integrations, or external action executors.
 
 The platform is independent of any messaging, mail, social, source-control, or
@@ -11,10 +11,10 @@ no deployment configuration, private data, or provider integration is included.
 
 The independent [request authorization primitives](docs/security.md) provide
 bounded in-memory bearer/browser sessions and CSRF proof checks in offline tests.
-An offline owner-password verifier now demonstrates login admission into these
-sessions using synthetic passwords. The separate [offline UI preview](web/README.md)
-uses invented data and in-memory simulations only. No application HTTP backend,
-authenticated browser application or real API exists. Core policy and audit-only
+An owner-password verifier admits scoped sessions for a separate localhost-only
+application (Issue #26). The separate [offline UI preview](web/README.md)
+uses invented data and in-memory simulations only. The local application connects
+a browser to a synthetic-only Python API and SQLite. Core policy and audit-only
 review remain separate.
 
 ## Quickstart
@@ -46,6 +46,41 @@ unless trusted application code supplies an exact `ApprovalRule`. The CLI does
 not create rules. Approval records never send, execute, change a stored policy
 decision, or grant future permission. All displayed demo content is fake.
 
+## Local authenticated application (Issue #26)
+
+Python 3.11 standard library only; no installation or dependencies. Example
+commands below are setup instructions, not an enrollment performed for you.
+Create a trusted owner-only directory outside the repository (0700), then use
+absolute paths for both verifier and database:
+
+```sh
+install -d -m 700 "$HOME/.local/share/assistant-hub-private"
+PYTHONPATH=src python3 -m assistant_hub.local_server bootstrap --verifier "$HOME/.local/share/assistant-hub-private/owner.json"
+PYTHONPATH=src python3 -m assistant_hub.local_server serve --verifier "$HOME/.local/share/assistant-hub-private/owner.json" --db "$HOME/.local/share/assistant-hub-private/hub.sqlite3" --port 18770
+```
+
+Bootstrap prompts twice via `getpass` (minimum 12 characters), creates a verifier
+with mode 0600, and refuses an existing file. No default password is supplied.
+Open **http://localhost:18770/** on the same computer. The listener binds only
+127.0.0.1; the exact `localhost:18770` Host is required, so a browser URL using
+127.0.0.1 is rejected. Sign in, explicitly collect synthetic events, select an
+item and save its workflow status: `new`, `review`, `deferred` or `done`.
+Collection fetches one synthetic page per selected account; repeat to advance
+bulletin pagination. Search and service/account/status filters operate on the
+stored inbox. These statuses never authorize actions or send messages.
+
+Refresh intentionally discards the bearer token. Sign in again to see persisted
+statuses and cursors; server restart preserves SQLite state but revokes sessions.
+Logout revokes the current token. Tokens stay in JavaScript memory only; no
+cookies, browser storage or URL tokens. The browser must send an exact Origin
+on POST; if it omits Origin the request fails closed. Safe GET may omit Origin.
+See [security limits](docs/security.md#localhost-application-issue-26).
+
+This remains a single-owner, single-process, synthetic-only local demo. No
+public interface, production/public TLS setup, real provider links, provider
+credentials or message sending exist. Do not forward the port or deploy it to
+a VPS. The public Pages/offline `web/` preview stays independent and unchanged.
+
 ## Offline browser preview
 
 **[Open the live synthetic UI preview](https://alexandrshapkin.github.io/assistant-hub/)** (works on phones; public demo only, no connected accounts).
@@ -59,9 +94,9 @@ python3 -m http.server 8765 --bind 127.0.0.1 --directory web
 
 Open `http://127.0.0.1:8765`. All content is synthetic; state resets on refresh.
 No external data, credentials, browser persistence or application network calls
-are used. Auth/logout, real APIs, an authenticated application and browser access to private
-data are NOT implemented. A separate Pages workflow may publish the static
-synthetic preview; no user or provider data is available there. The static file server is only a local viewing tool.
+are used by that independent preview. It has no login or backend connection.
+A separate Pages workflow may publish the static synthetic preview; no user or
+provider data is available there. The static file server is only a local viewing tool.
 
 ## Offline password proof (synthetic only)
 
@@ -75,7 +110,7 @@ For an executable bootstrap/login/rotation example using a temporary private
 path, see [offline owner proof instructions](docs/security.md#offline-owner-password-proof).
 The verifier uses scrypt (N=16384, r=8, p=1, 32-byte output, approximately 16 MiB
 working memory per derivation). This is not a credential vault: encryption,
-2FA, network login and production readiness are absent. Use synthetic data only.
+2FA and production readiness are absent. Use synthetic data only.
 
 ## Framework layout
 
