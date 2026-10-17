@@ -33,8 +33,10 @@ analytics, browser storage, service workers or provider-specific parsing.
 Only local static HTML, CSS and ES module resources are loaded. The README anchor
 is normal local navigation. A restrictive CSP blocks connection and worker use.
 
-Authentication, login/logout, real APIs, public hosting and real browser access to
-private data are NOT implemented. This preview is independent of the Python
+Authentication, login/logout, real APIs and browser access to private data
+are NOT implemented. A separate GitHub Pages workflow can publicly serve ONLY
+the six allowlisted static demo files after explicit repository setup. The
+public preview is not an authenticated application and cannot access accounts. This preview is independent of the Python
 security proofs and core policy; do not enter private data or expose it as a real
 application. No real decisions take effect.
 

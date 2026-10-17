@@ -20,6 +20,7 @@
 
 - [#3](https://github.com/AlexandrShapkin/assistant-hub/issues/3) — authenticated self-hosted unified inbox.
 - [#20](https://github.com/AlexandrShapkin/assistant-hub/issues/20) — [offline synthetic UI preview](../web/README.md), related to #3; implementation prepared for review, not marked complete before merge. No authentication or real API access.
+- [#22](https://github.com/AlexandrShapkin/assistant-hub/issues/22) — publish only verified synthetic UI assets through GitHub Pages.
 
 ## M3 — Automation
 
