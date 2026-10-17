@@ -1,4 +1,4 @@
-"""Explicit manual public feed snapshots. No discovery, redirects or retries."""
+"""Explicit public feed snapshots. No discovery, redirects or implicit transport retries."""
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from hashlib import sha256
@@ -283,3 +283,27 @@ class PublicFeedAdapter:
             return PollResult(tuple(events[:40]), json.dumps(new_state, sort_keys=True, separators=(',', ':')))
         except (ValueError, TypeError, KeyError, OverflowError, RecursionError, ET.ParseError, OSError):
             raise PermanentPollError(ERROR) from None
+
+
+class PublicFeedCatalog:
+    """One read-only adapter and independent cursor per explicit public feed."""
+
+    manifest = PublicFeedAdapter.manifest
+    MAX_FEEDS = 8
+
+    def __init__(self, urls, transport=None):
+        if (not isinstance(urls, (tuple, list)) or
+                not 1 <= len(urls) <= self.MAX_FEEDS):
+            raise ValueError('1 to 8 explicit public feeds required')
+        sources = [PublicFeedAdapter(url, transport) for url in urls]
+        accounts = tuple(source.accounts[0] for source in sources)
+        if len(set(accounts)) != len(accounts):
+            raise ValueError('duplicate public feed URL')
+        self.accounts = accounts
+        self._sources = dict(zip(accounts, sources))
+
+    def poll(self, account_id, cursor):
+        source = self._sources.get(account_id)
+        if source is None:
+            raise PermanentPollError(ERROR)
+        return source.poll(account_id, cursor)

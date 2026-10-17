@@ -345,10 +345,14 @@ is persisted as plaintext locally; a previously public repository becoming priva
 does not erase historical local snapshots. Anonymous rate limits and rolling
 snapshot gaps remain expected limitations.
 
-## Public feed reader (Issue #32)
+## Public feed reader (Issues #32, #36)
 
-The optional `--public-feed HTTPS_URL` localhost source is read-only and manually
-polled behind the existing owner bearer/Origin boundary. No URL is exposed by
+The optional `--public-feed HTTPS_URL` localhost sources (one to eight) are
+read-only. Manual collection remains behind the owner bearer/Origin boundary.
+An explicit `--poll-interval` of 900–86400 seconds also authorizes limited
+read-only collection by a separate in-process worker. No sources or scheduler
+are enabled implicitly. Each configured URL has a stable account and isolated
+HTTP validators; removing a startup binding never erases collected records. No URL is exposed by
 public health/static endpoints. The account is a canonical hostname plus URL
 SHA-256; cursors contain only versioned bounded HTTP validators, never passwords.
 Do not configure secret-bearing URLs. Common credential query keys are rejected;
@@ -371,9 +375,17 @@ parsed and validated before a result is returned, preserving Store atomicity.
 Titles/bodies are control-sanitized and capped at 2000 characters, HTML is stripped
 where applicable, and the local UI uses textContent. Display links must pass the
 public URL validator and match the configured host; links are never followed.
-No scheduling, lossless history guarantee, production deployment or provider
-mutations are implemented. Tests mock external transports/DNS/sockets; they do
-not establish interoperability with any live feed.
+Only one scheduler worker is used, sharing the same lock as owner requests
+but opening its own SQLite connection for each poll. The first attempt waits a
+full interval. Source failures are isolated: transient/unknown errors back off
+exponentially up to 24 hours, permanent validation errors stop retrying until
+a restart. Errors are not logged verbatim. Backoff state is memory-only and
+restarts reset it, but the next attempt still waits a full interval. Config
+changes require restart; no dynamic discovery or remote URL configuration.
+Manual owner polling can deliberately request an extra snapshot. There is
+no lossless history guarantee, public deployment or provider mutation.
+Tests use fake clocks/transports/DNS/sockets and do not establish live-feed
+compatibility.
 
 ## GitHub App authentication foundation (Issue #34)
 
