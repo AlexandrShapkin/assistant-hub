@@ -1,9 +1,44 @@
 """Typed public contracts. Adapter output and manifests are validated at boundaries."""
 from dataclasses import dataclass, field
 from datetime import datetime
+import re
 from typing import Literal, Protocol
 
+SDK_VERSION = 1
+# Reserved compatibility names have fixed risk semantics. New provider/application
+# capabilities use a namespaced name, e.g. "issues.create" or "feed.fetch".
+RESERVED_CAPABILITIES = {
+    "read": (False, "low"),
+    "reply": (True, "high"),
+    "exact-template": (True, "low"),
+}
+EXTENSION_NAME = re.compile(r"[a-z][a-z0-9]*(?:[._-][a-z][a-z0-9]*)+")
 Risk = Literal["low", "high"]
+
+
+class PollError(Exception):
+    """Provider failure. Core propagates it without retry or cursor changes."""
+
+
+class TransientPollError(PollError):
+    pass
+
+
+class PermanentPollError(PollError):
+    pass
+
+
+class AuthenticationPollError(PollError):
+    pass
+
+
+class RateLimitPollError(PollError):
+    pass
+
+
+def validate_cursor(cursor: str | None) -> None:
+    if cursor is not None and (not nonempty(cursor) or len(cursor) > 4096):
+        raise ValueError("cursor must be None or a nonempty string of at most 4096 characters")
 
 
 def nonempty(value: str) -> bool:
@@ -19,6 +54,12 @@ class Capability:
     def __post_init__(self) -> None:
         if not nonempty(self.name) or type(self.mutating) is not bool or self.risk not in ("low", "high"):
             raise ValueError("invalid capability")
+        reserved = RESERVED_CAPABILITIES.get(self.name)
+        if reserved is not None:
+            if reserved != (self.mutating, self.risk):
+                raise ValueError("reserved capability risk cannot change")
+        elif EXTENSION_NAME.fullmatch(self.name) is None:
+            raise ValueError("custom capabilities require a namespaced identifier")
 
 
 @dataclass(frozen=True)
@@ -26,13 +67,18 @@ class Manifest:
     service_id: str
     version: str
     capabilities: tuple[Capability, ...]
+    sdk_version: int = SDK_VERSION
 
     def __post_init__(self) -> None:
+        if type(self.sdk_version) is not int or self.sdk_version != SDK_VERSION:
+            raise ValueError("unsupported adapter SDK version")
         if (not nonempty(self.service_id) or not nonempty(self.version)
                 or not isinstance(self.capabilities, tuple)
                 or not self.capabilities
                 or any(not isinstance(c, Capability) for c in self.capabilities)):
             raise ValueError("invalid manifest")
+        for capability in self.capabilities:
+            capability.__post_init__()
         if len({c.name for c in self.capabilities}) != len(self.capabilities):
             raise ValueError("duplicate capability")
 
@@ -69,7 +115,9 @@ class PollResult:
 
 
 class Adapter(Protocol):
+    """Trusted read-only polling code; accounts are stable opaque IDs."""
     manifest: Manifest
+    accounts: tuple[str, ...]
 
     def poll(self, account_id: str, cursor: str | None) -> PollResult: ...
 

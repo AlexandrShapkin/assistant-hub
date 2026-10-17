@@ -24,8 +24,9 @@ Use a trusted private directory. Backups and terminal output can expose content.
 The audit log contains intent keys, decisions, collection counts, and review
 labels. Intent payloads and event bodies are stored in plaintext. This scaffold
 has no retention, export-redaction, or deletion policy. Use synthetic data only.
-There is no account authorization model beyond adapter validation and caller
-scope. Unknown capabilities deny; high-risk actions always require review,
+Explicit local registry bindings allowlist account capabilities before polling
+and planning. They do not authenticate callers or prove account ownership.
+Unknown capabilities deny; high-risk actions always require review,
 including when an exact low-risk-style rule would otherwise match.
 
 `.gitignore` and `scripts/check_public_tree.py` reduce accidental publication of
