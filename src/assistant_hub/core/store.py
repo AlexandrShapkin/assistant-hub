@@ -5,7 +5,8 @@ from pathlib import Path
 import sqlite3
 import stat
 from dataclasses import asdict
-from .contracts import ActionIntent, Decision, Event, PollResult
+from .contracts import ActionIntent, Decision, PollResult
+from .conformance import validate_poll_result
 
 
 def encode(value: object) -> str:
@@ -50,16 +51,7 @@ class Store:
         return row[0] if row else None
 
     def ingest(self, service: str, account: str, result: PollResult) -> int:
-        if (not isinstance(result, PollResult) or not isinstance(result.events, tuple)
-                or (result.cursor is not None and not isinstance(result.cursor, str))):
-            raise ValueError("invalid poll result")
-        for event in result.events:
-            if not isinstance(event, Event):
-                raise ValueError("invalid event")
-            # Revalidate mutable attributes before accepting adapter data.
-            event.__post_init__()
-            if event.service_id != service or event.account_id != account:
-                raise ValueError("adapter spoofed event scope")
+        validate_poll_result(service, account, result, self.cursor(service, account))
         count = 0
         with self.db:
             for event in result.events:

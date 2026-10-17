@@ -18,6 +18,17 @@ LLM. Mutations require review by default, high risk always requires review, and
 low-risk preapproval requires an exact explicitly approved rule.
 
 Consequences: the scaffold is small and testable without network or dependencies,
-but provides no real integrations or executable actions. Approval provenance,
-production security, and provider conformance remain future work. Documentation
+but provides no real integrations or executable actions. Approval provenance
+and production security remain future work. SDK v1 now provides deterministic
+synthetic conformance checks, not real-provider certification. Documentation
 and tests must distinguish implemented behavior from these proposals.
+
+SDK v1 makes the boundary explicit: versioned manifests use reserved capability
+semantics plus extensible provider-namespaced operations; trusted application
+code binds stable accounts to a subset of declared capabilities before use. No bindings means no account authority. A second fake
+provider integrates through these contracts without provider-specific core
+business logic. Typed polling failures propagate without automatic retries;
+opaque cursors cannot reset established state. Runtime page validation and a
+reusable unittest fixture runner exercise scoped deduplication and atomic
+rollback. See [SDK contract and examples](../adapter-sdk.md). These mechanisms
+do not authenticate users, sandbox adapters or enable external side effects.

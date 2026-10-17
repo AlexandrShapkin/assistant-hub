@@ -1,6 +1,7 @@
 # Architecture
 
-Status: pre-alpha local prototype; interfaces may change.
+Status: pre-alpha local prototype; [Adapter SDK v1](adapter-sdk.md) is the
+versioned polling boundary. No real providers or dispatch exist.
 
 `CLI -> Hub -> Registry -> Adapter.poll(account, cursor)` collects a `PollResult`.
 The registry contains only explicitly supplied adapter instances. There is no
@@ -11,9 +12,23 @@ The store validates every event against the requested service/account before any
 write. Event insertion, cursor advancement, and collection audit are one SQLite
 transaction. `(service, account, external_id)` identifies an event; the first
 stored version wins. Cursors are opaque strings scoped by service and account.
+Registry validates the SDK version, reserved capability safety constraints and
+open-ended namespaced operations, snapshots service/account identities, and
+requires explicit per-account capability bindings.
+Hub checks the binding before poll and denies unbound planning operations.
+Registration without bindings authorizes no accounts. Trusted application code
+supplies this configuration; it does not authenticate an account owner.
+
 The demo recognizes two synthetic accounts and returns one event per account,
-then an empty result for the saved cursor. Polling itself is not transactional
-with an external service; future adapters must tolerate retries.
+then an empty result for the saved cursor. A second fake bulletin provider has
+distinct identities and overlapping, out-of-order pages. Neither requires
+provider branches in the core mechanisms. Polling itself is not transactional
+with an external service; future adapters must tolerate replay. Core never
+retries automatically. Typed transient, permanent, authentication and rate-limit
+errors propagate without changing committed state. Valid cursors are None or
+nonblank strings up to 4096 characters; established cursors cannot reset to None.
+The shared runtime conformance validator rejects malformed pages and spoofed
+scope before writes. SQL failures also roll back events, cursor and audit.
 
 `Hub.plan(intent, rules)` evaluates policy and stores an intent plus decision.
 The idempotency key is global within a database: replaying identical intent data

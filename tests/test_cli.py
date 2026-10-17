@@ -33,3 +33,12 @@ class CliTests(unittest.TestCase):
             self.assertEqual(self.invoke(*base, "intents")[0]["decision"]["status"], "review")
             with redirect_stderr(io.StringIO()):
                 self.assertEqual(main([*base, *plan, "--payload", "Different"]), 1)
+
+
+    def test_bulletin_pages_and_demo_remain_independent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = ("--db", str(Path(directory) / "hub.db"))
+            for count in (2, 1, 0):
+                self.assertEqual(self.invoke(*base, "collect-bulletin", "bulletin-alpha")["inserted"], count)
+            self.assertEqual(self.invoke(*base, "collect-demo", "demo-one")["inserted"], 1)
+            self.assertEqual(len(self.invoke(*base, "inbox")), 4)

@@ -2,7 +2,7 @@
 
 **Pre-alpha, nonproduction scaffold.** A Python 3.11+ standard-library-only
 prototype for collecting account-scoped events and recording permission decisions.
-The only adapter is a **fake, synthetic demo**. There are no network calls,
+Both adapters are **fake, synthetic fixtures**. There are no network calls,
 credentials, outgoing sends, model integrations, or external action executors.
 
 The platform is independent of any messaging, mail, social, source-control, or
@@ -19,6 +19,7 @@ python -m assistant_hub doctor
 python -m assistant_hub services
 python -m assistant_hub collect-demo demo-one
 python -m assistant_hub collect-demo demo-two
+python -m assistant_hub collect-bulletin bulletin-alpha
 python -m assistant_hub inbox
 python -m assistant_hub plan-demo --target synthetic-thread --payload 'Synthetic reply' --key example-1
 python -m assistant_hub intents
@@ -40,7 +41,9 @@ decision, or grant future permission. All displayed demo content is fake.
 ## Framework layout
 
 - `src/assistant_hub/core/contracts.py`: typed dataclasses and adapter protocol.
-- `core/registry.py`, `core/demo.py`: explicit adapter enablement and synthetic fixture.
+- `core/registry.py`, `core/demo.py`: explicit account bindings and two synthetic adapters.
+- [Adapter SDK v1](docs/adapter-sdk.md): extensible capability names, cursors, typed failures,
+  example registration and reusable offline conformance checks.
 - `core/policy.py`: deterministic permissions, separate from language models.
 - `core/store.py`, `core/hub.py`: local persistence and orchestration.
 - `src/assistant_hub/cli.py`: local demonstration commands.

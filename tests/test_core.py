@@ -5,11 +5,11 @@ import stat
 import tempfile
 import unittest
 
-from assistant_hub.core.contracts import ActionIntent, ApprovalRule, Capability, Event, Manifest, PollResult
+from assistant_hub.core.contracts import ActionIntent, ApprovalRule, Capability, Event, Manifest, PollResult, PermanentPollError
 from assistant_hub.core.demo import DemoAdapter
 from assistant_hub.core.hub import Hub
 from assistant_hub.core.policy import decide
-from assistant_hub.core.registry import Registry
+from assistant_hub.core.registry import Binding, Registry
 from assistant_hub.core.store import Store
 
 
@@ -19,7 +19,9 @@ class CoreTests(unittest.TestCase):
         self.path = Path(self.temp.name) / "hub.db"
         self.store = Store(self.path)
         self.registry = Registry()
-        self.registry.enable(DemoAdapter())
+        self.registry.enable(DemoAdapter(), tuple(
+            Binding(a, ("read", "reply", "exact-template")) for a in DemoAdapter.accounts
+        ))
         self.hub = Hub(self.registry, self.store)
         self.intent = ActionIntent("demo", "demo-one", "exact-template", "stable-target", "exact text", "key")
         self.rule = ApprovalRule("demo", "demo-one", "exact-template", "stable-target", "exact text", "local-user")
@@ -95,7 +97,7 @@ class CoreTests(unittest.TestCase):
             Capability("reply", True, "medium")
         with self.assertRaises(ValueError):
             self.registry.enable(DemoAdapter())
-        with self.assertRaises(ValueError):
+        with self.assertRaises(PermanentPollError):
             DemoAdapter().poll("unknown", None)
         with self.assertRaises(ValueError):
             Event("demo", "a", "id", "message", datetime.now(), "", "", "")

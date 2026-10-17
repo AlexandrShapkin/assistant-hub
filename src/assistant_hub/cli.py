@@ -6,16 +6,19 @@ from pathlib import Path
 import sqlite3
 import sys
 import tempfile
-from .core.contracts import ActionIntent
-from .core.demo import DemoAdapter
+from .core.contracts import ActionIntent, PollError
+from .core.demo import BulletinAdapter, DemoAdapter
 from .core.hub import Hub
-from .core.registry import Registry
+from .core.registry import Binding, Registry
 from .core.store import Store
 
 
 def registry() -> Registry:
     result = Registry()
-    result.enable(DemoAdapter())
+    result.enable(DemoAdapter(), tuple(
+        Binding(a, ("read", "reply", "exact-template")) for a in DemoAdapter.accounts
+    ))
+    result.enable(BulletinAdapter(), tuple(Binding(a) for a in BulletinAdapter.accounts))
     return result
 
 
@@ -42,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("services")
     collect = commands.add_parser("collect-demo")
     collect.add_argument("account", choices=DemoAdapter.accounts)
+    bulletin = commands.add_parser("collect-bulletin")
+    bulletin.add_argument("account", choices=BulletinAdapter.accounts)
     commands.add_parser("inbox")
     plan = commands.add_parser("plan-demo")
     plan.add_argument("--account", default="demo-one", choices=DemoAdapter.accounts)
@@ -65,6 +70,8 @@ def main(argv: list[str] | None = None) -> int:
             hub = Hub(registry(), store)
             if args.command == "collect-demo":
                 output = {"label": "FAKE DEMO", "inserted": hub.collect("demo", args.account)}
+            elif args.command == "collect-bulletin":
+                output = {"label": "FAKE DEMO", "inserted": hub.collect("bulletin", args.account)}
             elif args.command == "inbox":
                 output = store.inbox()
             elif args.command == "plan-demo":
@@ -77,7 +84,7 @@ def main(argv: list[str] | None = None) -> int:
                 output = {"recorded": args.outcome, "dispatch": "not implemented"}
         print(json.dumps(output, indent=2))
         return 0
-    except (ValueError, KeyError, OSError, sqlite3.Error) as error:
+    except (ValueError, KeyError, OSError, sqlite3.Error, PollError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     finally:
