@@ -12,6 +12,12 @@ ROOT = Path(__file__).resolve().parents[1]
 BLOCKED_SUFFIXES = {".db", ".sqlite", ".sqlite3", ".pem", ".key", ".p12", ".pfx", ".session"}
 
 
+# Exact source paths only; content and symlink checks still apply.
+CREDENTIAL_SOURCE_PATHS = {
+    "src/assistant_hub/security/credentials.py", "tests/test_credentials.py",
+}
+
+
 def unsafe_path(name: str) -> bool:
     path = PurePosixPath(name)
     return (path.is_absolute() or ".." in path.parts
@@ -19,7 +25,9 @@ def unsafe_path(name: str) -> bool:
                    for part in path.parts)
             or any(part == ".env" or part.startswith(".env.") for part in path.parts)
             or path.suffix.lower() in BLOCKED_SUFFIXES
-            or any(word in path.name.lower() for word in ("credentials", "secrets", ".session", ".sqlite", ".db-")))
+            or (name not in CREDENTIAL_SOURCE_PATHS and
+                any(word in path.name.lower() for word in
+                    ("credentials", "secrets", ".session", ".sqlite", ".db-"))))
 
 
 def sensitive_content(data: bytes) -> bool:

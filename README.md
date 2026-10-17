@@ -3,7 +3,7 @@
 **Pre-alpha, nonproduction scaffold.** A Python 3.11+ standard-library-only
 prototype for collecting account-scoped events and recording permission decisions.
 Both adapters are **fake, synthetic fixtures**. There are no network calls,
-credentials, outgoing sends, model integrations, or external action executors.
+provider credentials, outgoing sends, model integrations, or external action executors.
 
 The platform is independent of any messaging, mail, social, source-control, or
 device provider. Earlier isolated remote-demo experiments informed the boundary;
@@ -11,8 +11,9 @@ no deployment configuration, private data, or provider integration is included.
 
 The independent [request authorization primitives](docs/security.md) provide
 bounded in-memory bearer/browser sessions and CSRF proof checks in offline tests.
-They do not provide login or an authenticated web UI; no web UI or HTTP server
-exists in this repository. Core policy and audit-only review remain separate.
+An offline owner-password verifier now demonstrates login admission into these
+sessions using synthetic passwords. No web UI or HTTP server exists. Core policy
+and audit-only review remain separate.
 
 ## Quickstart
 
@@ -42,6 +43,20 @@ both intentionally reuse an external event ID to demonstrate account separation.
 unless trusted application code supplies an exact `ApprovalRule`. The CLI does
 not create rules. Approval records never send, execute, change a stored policy
 decision, or grant future permission. All displayed demo content is fake.
+
+## Offline password proof (synthetic only)
+
+Run the isolated proof from the repository root:
+
+```sh
+PYTHONPATH=src python3 -m unittest discover -s tests -p test_credentials.py -v
+```
+
+For an executable bootstrap/login/rotation example using a temporary private
+path, see [offline owner proof instructions](docs/security.md#offline-owner-password-proof).
+The verifier uses scrypt (N=16384, r=8, p=1, 32-byte output, approximately 16 MiB
+working memory per derivation). This is not a credential vault: encryption,
+2FA, network login and production readiness are absent. Use synthetic data only.
 
 ## Framework layout
 
