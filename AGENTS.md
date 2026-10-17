@@ -14,9 +14,14 @@ registered adapters/apps provide provider-specific behavior. Preserve
 service/account identity, deterministic policy independent of LLM output,
 strict event deduplication, auditability and predictable error handling.
 
-Maturity is pre-alpha: current functionality is **synthetic demo only**.
-No real provider integration, network operations or dispatch implementation
-exists. Do not imply otherwise.
+Maturity is **pre-alpha and localhost-only**. Two adapters use fictional data
+by default. An optional explicit GitHub public-repository reader (Issue #28)
+can make anonymous, read-only HTTPS requests for public Issues, PRs and CI runs
+when configured at local-server startup, and persists them to local SQLite.
+It has no GitHub App/OAuth/private-repository access, no background collection,
+no external mutation/dispatch, and no production-facing deployment. Public
+GitHub Pages remains a separate synthetic-only offline interface.
+Do not conflate a verified public read-only source with unrestricted account access.
 
 ## Autonomous development authority
 
