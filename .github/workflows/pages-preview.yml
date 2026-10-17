@@ -28,7 +28,7 @@ jobs:
       - name: Validate preview modules and synthetic-only boundaries
         run: |
           set -eu
-          for module in web/app.mjs web/view-model.mjs web/demo-data.mjs web/tests/view-model.test.mjs; do
+          for module in web/app.mjs web/view-model.mjs web/demo-data.mjs web/i18n.mjs web/tests/view-model.test.mjs web/tests/i18n.test.mjs; do
             node --check "$module"
           done
           node --test web/tests/*.test.mjs
@@ -36,8 +36,8 @@ jobs:
       - name: Build explicit static allowlist
         run: |
           mkdir -p _site
-          cp web/index.html web/styles.css web/app.mjs web/view-model.mjs web/demo-data.mjs web/README.md _site/
-          test "$(find _site -maxdepth 1 -type f | wc -l)" -eq 6
+          cp web/index.html web/styles.css web/app.mjs web/view-model.mjs web/demo-data.mjs web/i18n.mjs web/README.md _site/
+          test "$(find _site -maxdepth 1 -type f | wc -l)" -eq 7
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

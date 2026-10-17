@@ -1,40 +1,48 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'none'">
-  <title>Assistant Hub</title>
+  <title>Assistant Hub · Демонстрация</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.mjs"></script>
 </head>
 <body>
-  <a class="skip" href="#workspace">Skip to inbox</a>
-  <header class="topbar"><a class="brand" href="./index.html"><span class="logo" aria-hidden="true">a</span>Assistant Hub</a><span class="preview-label">OFFLINE PREVIEW</span><a href="./README.md">About this demo ↗</a></header>
-  <div class="banner"><span class="demo-dot" aria-hidden="true"></span><strong>Synthetic demo — no accounts connected</strong><span>All activity is invented. Changes stay in memory and reset on refresh.</span></div>
+  <a class="skip" href="#workspace" data-i18n="skip">К списку событий</a>
+  <header class="topbar">
+    <a class="brand" href="./index.html"><span class="logo" aria-hidden="true">a</span>Assistant Hub</a>
+    <span class="preview-label" data-i18n="preview">АВТОНОМНАЯ ДЕМО-ВЕРСИЯ</span>
+    <a class="about-link" href="./README.md" data-i18n="about">О демонстрации ↗</a>
+    <div class="language-switch" role="group" aria-label="Язык интерфейса" data-i18n-aria="language">
+      <button id="locale-ru" type="button" lang="ru" aria-pressed="true">RU</button>
+      <button id="locale-en" type="button" lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+  <div class="banner"><span class="demo-dot" aria-hidden="true"></span><strong data-i18n="demo">Учебные данные — аккаунты не подключены</strong><span data-i18n="demoNotice">Все события вымышлены. Изменения хранятся в памяти и исчезают при обновлении страницы.</span></div>
   <div class="shell">
-    <aside class="sidebar" aria-label="Inbox navigation and filters">
-      <button id="filters-toggle" class="filters-toggle" type="button" aria-expanded="false" aria-controls="sidebar-content">Sources and filters <span aria-hidden="true">▾</span></button>
+    <aside class="sidebar" aria-label="Источники и фильтры" data-i18n-aria="filters">
+      <button id="filters-toggle" class="filters-toggle" type="button" aria-expanded="false" aria-controls="sidebar-content"><span data-i18n="filters">Источники и фильтры</span><span aria-hidden="true">▾</span></button>
       <div id="sidebar-content" class="sidebar-content">
-      <p class="eyebrow">YOUR WORKSPACE</p><h1>One place.<br>A clearer picture.</h1><p class="muted intro">A quiet overview of activity across your tools.</p>
-      <div class="section-label">INBOX <button id="reset" class="text-button" type="button">Reset filters</button></div>
+      <p class="eyebrow" data-i18n="workspace">РАБОЧЕЕ ПРОСТРАНСТВО</p><h1><span data-i18n="headline1">Всё в одном месте.</span><br><span data-i18n="headline2">Всё по полочкам.</span></h1><p class="muted intro" data-i18n="intro">Спокойный обзор событий из разных инструментов.</p>
+      <div class="section-label"><span data-i18n="inboxGroup">ВХОДЯЩИЕ</span> <button id="reset" class="text-button" type="button" data-i18n="reset">Сбросить фильтры</button></div>
       <div id="statuses" class="nav-group"></div>
-      <div class="section-label">SERVICES</div><div id="sources" class="nav-group"></div>
-      <div class="section-label">ACCOUNTS <span class="muted">fictional</span></div><div id="accounts" class="nav-group"></div>
-      <div class="sidebar-note"><strong>Built around your context</strong><p>Service and account identities travel with every item. No tools are connected in this preview.</p></div>
+      <div class="section-label" data-i18n="servicesGroup">СЕРВИСЫ</div><div id="sources" class="nav-group"></div>
+      <div class="section-label"><span data-i18n="accountsGroup">АККАУНТЫ</span> <span class="muted" data-i18n="fictional">вымышленные</span></div><div id="accounts" class="nav-group"></div>
+      <div class="sidebar-note"><strong data-i18n="sidebarNote">Контекст важен</strong><p data-i18n="sidebarNoteText">У каждого события сохраняется связь с сервисом и аккаунтом. В этой версии реальные сервисы не подключены.</p></div>
       </div>
     </aside>
     <main id="workspace" class="inbox" tabindex="-1">
-      <div class="inbox-heading"><div><p class="eyebrow">ACTIVITY OVERVIEW</p><h2>Inbox <span id="count" class="count"></span></h2></div><span class="muted">Sample day · 14 Oct 2026</span></div>
-      <label class="search-label" for="search">Search activity</label><input id="search" type="search" placeholder="Search titles, content, services…" autocomplete="off">
-      <div class="toolbar"><label>Priority <select id="priority"><option value="">All priorities</option><option value="important">Important</option><option value="normal">Normal</option></select></label><label>Sort <select id="sort"><option value="latest">Latest first</option><option value="important">Important first</option></select></label></div>
-      <p id="results" class="muted result-label" role="status"></p><div id="items" class="items" aria-label="Activity items"></div>
+      <div class="inbox-heading"><div><p class="eyebrow" data-i18n="overview">ОБЗОР СОБЫТИЙ</p><h2><span data-i18n="inbox">Входящие</span> <span id="count" class="count"></span></h2></div><span class="muted" data-i18n="sampleDate">Пример дня · 14 октября 2026</span></div>
+      <label class="search-label" for="search" data-i18n="search">Поиск событий</label><input id="search" type="search" placeholder="Поиск по темам, содержимому и сервисам…" data-i18n-placeholder="searchPlaceholder" autocomplete="off">
+      <div class="toolbar"><label><span data-i18n="priority">Приоритет</span> <select id="priority"><option value="" data-i18n="allPriorities">Все приоритеты</option><option value="important" data-i18n="important">Важный</option><option value="normal" data-i18n="normal">Обычный</option></select></label><label><span data-i18n="sort">Сортировка</span> <select id="sort"><option value="latest" data-i18n="latest">Сначала новые</option><option value="important" data-i18n="importantFirst">Сначала важные</option></select></label></div>
+      <p id="results" class="muted result-label" role="status"></p><div id="items" class="items" aria-label="Список событий" data-i18n-aria="activityItems"></div>
     </main>
-    <aside id="inspector" class="inspector" aria-label="Selected item details"></aside>
+    <aside id="inspector" class="inspector" aria-label="Подробности выбранного события" data-i18n-aria="detailsLabel"></aside>
   </div>
-  <footer>Offline by design · Synthetic data only · No authentication, connected accounts, or dispatch</footer>
+  <footer data-i18n="footer">Автономная демо-версия · Только вымышленные данные · Нет авторизации, аккаунтов и отправки действий</footer>
   <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
-  <noscript>This offline preview requires JavaScript modules. No accounts or private data are available.</noscript>
+  <noscript>Для этой демо-версии нужен JavaScript. Реальные аккаунты и личные данные недоступны.</noscript>
 </body>
 </html>
