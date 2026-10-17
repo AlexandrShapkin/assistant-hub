@@ -1,32 +1,67 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Assistant Hub · Local workspace</title>
+  <title>Assistant Hub · Личное пространство</title>
   <link rel="stylesheet" href="/styles.css">
   <script type="module" src="/app.mjs"></script>
 </head>
 <body>
-  <header><span class="logo" aria-hidden="true">a</span><strong>Assistant Hub</strong><span>LOCAL WORKSPACE</span></header>
-  <div class="banner"><strong id="source-banner">Synthetic demo — synthetic-only; no real sources linked</strong><p>Workflow statuses persist locally. Nothing is sent. Refresh requires login again.</p></div>
+  <header>
+    <span class="logo" aria-hidden="true">a</span>
+    <strong>Assistant Hub</strong>
+    <span data-i18n="localWorkspace">ЛИЧНОЕ ПРОСТРАНСТВО</span>
+    <div class="language-switch" role="group" aria-label="Язык интерфейса" data-i18n-aria="languageAria">
+      <button id="locale-ru" type="button" lang="ru" aria-pressed="true">RU</button>
+      <button id="locale-en" type="button" lang="en" aria-pressed="false">EN</button>
+    </div>
+  </header>
+  <div class="banner">
+    <strong id="source-banner">Synthetic demo — synthetic-only; no real sources linked</strong>
+    <p data-i18n="bannerNote">Статусы сохраняются локально. Ничего не отправляется. После обновления страницы потребуется войти заново.</p>
+  </div>
   <p id="notice" role="status" aria-live="polite"></p>
   <section id="login-panel" class="card">
-    <h1>Your local workspace</h1><p>Sign in with the owner password enrolled on this computer.</p>
-    <form id="login-form"><label for="password">Owner password</label><input id="password" type="password" required autocomplete="off" maxlength="1024"><button>Sign in</button></form>
+    <h1 data-i18n="loginTitle">Личное пространство</h1>
+    <p data-i18n="loginHint">Войди с паролем владельца, который был создан на этом сервере.</p>
+    <form id="login-form">
+      <label for="password" data-i18n="ownerPassword">Пароль владельца</label>
+      <input id="password" type="password" required autocomplete="off" maxlength="1024">
+      <button data-i18n="signIn">Войти</button>
+    </form>
   </section>
   <main id="workspace" hidden>
-    <aside class="card"><p class="eyebrow">YOUR WORKSPACE</p><h1>One place.<br>A clearer picture.</h1>
-      <label for="service">Service</label><select id="service"></select>
-      <label for="account">Account</label><select id="account"></select>
-      <label for="status-filter">Workflow status</label><select id="status-filter"><option value="">All statuses</option><option>new</option><option>review</option><option>deferred</option><option>done</option></select>
-      <button id="collect" type="button">Collect events</button><p>Collects one page for the selected account, or all accounts if none selected.</p>
-      <button id="logout" type="button">Log out</button>
+    <aside class="card">
+      <p class="eyebrow" data-i18n="workspace">РАБОЧЕЕ ПРОСТРАНСТВО</p>
+      <h1><span data-i18n="headline1">Всё в одном месте.</span><br><span data-i18n="headline2">Всё по полочкам.</span></h1>
+      <label for="service" data-i18n="service">Сервис</label><select id="service"></select>
+      <label for="account" data-i18n="account">Аккаунт</label><select id="account"></select>
+      <label for="status-filter" data-i18n="workflowStatus">Статус</label>
+      <select id="status-filter">
+        <option value="" data-i18n="allStatuses">Все статусы</option>
+        <option value="new" data-i18n="status.new">Новые</option>
+        <option value="review" data-i18n="status.review">На рассмотрении</option>
+        <option value="deferred" data-i18n="status.deferred">Отложенные</option>
+        <option value="done" data-i18n="status.done">Готово</option>
+      </select>
+      <button id="collect" type="button" data-i18n="collect">Собрать события</button>
+      <p data-i18n="collectHint">Загружает одну страницу событий для выбранного аккаунта или для всех аккаунтов, если ничего не выбрано.</p>
+      <button id="logout" type="button" data-i18n="logout">Выйти</button>
     </aside>
-    <section class="card"><p class="eyebrow">ACTIVITY OVERVIEW</p><h2>Inbox</h2><label for="search">Search activity</label><input id="search" type="search" placeholder="Search titles, content, identities…"><p id="count" role="status"></p><div id="items"></div></section>
-    <aside class="card" id="details" aria-label="Selected item details"><h2>Item details</h2><p>Select an item to review its workflow status.</p></aside>
+    <section class="card">
+      <p class="eyebrow" data-i18n="overview">ОБЗОР СОБЫТИЙ</p>
+      <h2 data-i18n="inbox">Входящие</h2>
+      <label for="search" data-i18n="search">Поиск событий</label>
+      <input id="search" type="search" placeholder="Поиск по темам, содержимому и идентификаторам…" data-i18n-placeholder="searchPlaceholder">
+      <p id="count" role="status"></p><div id="items"></div>
+    </section>
+    <aside class="card" id="details" aria-label="Подробности выбранного события" data-i18n-aria="detailsAria">
+      <h2 data-i18n="itemDetails">Подробности</h2>
+      <p data-i18n="selectPrompt">Выбери событие, чтобы изменить его статус.</p>
+    </aside>
   </main>
-  <footer>Pre-alpha · Localhost only · Public or synthetic data · No dispatch</footer>
-  <noscript>JavaScript modules are required for this local application.</noscript>
+  <footer data-i18n="footer">Предварительная версия · Только localhost · Публичные или учебные данные · Без отправки действий</footer>
+  <noscript>Для работы этой локальной панели требуется JavaScript.</noscript>
 </body>
 </html>

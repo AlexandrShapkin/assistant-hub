@@ -289,7 +289,7 @@ cookies, local/session storage or URLs. Refresh logs out; logout revokes the
 session; process restart loses all grants. No CORS allow-origin header exists.
 CSP permits only same-origin scripts, styles and API connections, denies frames,
 forms, workers and external assets. Responses also set `nosniff`, `no-store` and
-frame denial. Static serving is an exact four-path allowlist from `local_web/`,
+frame denial. Static serving is an exact five-path allowlist from `local_web/`,
 with no-follow directory/file opens, regular-file checks and no filesystem path
 construction from user input. Traversal, encoded paths, query strings and unknown
 files deny. Database, repository and verifier are never served.
@@ -313,8 +313,8 @@ DemoAdapter/BulletinAdapter and optionally the public GitHub reader.
 
 Validation: `tests/test_local_server.py` uses ephemeral real loopback HTTP,
 private temporary directories and a synthetic test password. Run the repository
-checks plus `node --check src/assistant_hub/local_web/app.mjs` and
-`node --test web/tests/*.test.mjs`. These tests require a host permitting local
+checks, `node --check` for both `src/assistant_hub/local_web/*.mjs` modules,
+and `node --test web/tests/*.test.mjs`. These tests require a host permitting local
 sockets; a sandbox socket denial is a validation blocker, not evidence of success.
 
 ## Anonymous public GitHub boundary (#28)
