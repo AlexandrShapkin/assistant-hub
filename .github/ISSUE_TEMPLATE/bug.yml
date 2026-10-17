@@ -1,0 +1,56 @@
+name: Bug report
+description: Reproducible defect or regression
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: "Never include credentials, personal messages, machine addresses, cookies or session tokens. Search existing open and closed Issues first."
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem and impact
+      description: Explain what fails and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction and evidence
+      description: Small safe example, observed/expected behavior, versions.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+      description: Keep the fix bounded.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable conditions for closure.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Tests or independent evidence required.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: ["core", "adapters", "ui", "security", "automation", "ci", "docs"]
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ["P0 (critical)", "P1 (blocking)", "P2 (important)", "P3 (later)"]
+    validations:
+      required: true

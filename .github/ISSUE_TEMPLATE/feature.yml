@@ -1,0 +1,52 @@
+name: Feature or improvement
+description: Propose bounded functionality with verification criteria
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: "GitHub Issues is the live task tracker. Scope work before implementation. Do not submit private data."
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal and user scenario
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Out of scope
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Use a short checklist of observable outcomes.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Verification plan
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies or blockers
+      description: Link issues or write None.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: ["core", "adapters", "ui", "security", "automation", "ci", "docs"]
+    validations:
+      required: true
