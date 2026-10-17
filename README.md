@@ -169,3 +169,23 @@ snapshots can miss updates and anonymous API requests are rate limited. Issues
 and PRs sort by updated time; Actions uses GitHub's default run ordering. The
 `latest-v1` cursor marks snapshot collection, not a historical watermark. Replays
 deduplicate; changed update timestamps produce independent event versions.
+
+## Optional public feed reader (Issue #32)
+
+Append `--public-feed https://hnrss.org/frontpage` to the local
+`python3 -m assistant_hub.local_server serve` command above. Exactly one feed
+can be configured, alongside the optional GitHub reader. Startup makes no feed
+requests. Sign in as the local owner and explicitly collect `public-feed` to
+read one RSS2, Atom or JSON Feed v1/1.1 snapshot into local SQLite.
+
+Only public HTTPS names on port 443 are accepted; credential query parameters,
+IP literals, local names, redirects and nonpublic DNS answers are refused.
+No credentials, ambient proxies, cookies, embedded resources or item links are
+fetched. Feed text is displayed as inert text. Each poll accepts at most 512 KiB
+and emits at most 40 events. Valid ETag/Last-Modified values enable conditional
+requests. Repeated versions deduplicate; a changed item timestamp yields a new
+version. Undated IDs remain stable across polls, with receipt time used only
+for display. This is a **rolling snapshot, not lossless synchronization**.
+There is no scheduling, retry/backoff, discovery or provider action. The default
+app remains synthetic, and public `web/` / GitHub Pages remains unchanged.
+See [security boundaries](docs/security.md#public-feed-reader-issue-32).

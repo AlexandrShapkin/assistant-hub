@@ -13,6 +13,7 @@ import threading
 import warnings
 
 from .adapters.github_public import GitHubPublicAdapter
+from .adapters.public_feed import PublicFeedAdapter
 from .core.contracts import PollError, RateLimitPollError
 from .core.demo import BulletinAdapter, DemoAdapter
 from .core.hub import Hub
@@ -83,7 +84,7 @@ class LocalServer(ThreadingHTTPServer):
     daemon_threads = True
     block_on_close = True
 
-    def __init__(self, verifier, db, port=18770, github_public_repo=None):
+    def __init__(self, verifier, db, port=18770, github_public_repo=None, public_feed=None):
         verifier, self.db_path = absolute(verifier), absolute(db)
         if verifier.resolve() == self.db_path.resolve():
             raise ValueError("separate paths required")
@@ -98,6 +99,9 @@ class LocalServer(ThreadingHTTPServer):
         if github_public_repo is not None:
             adapters.append(GitHubPublicAdapter(github_public_repo))
         self.github_public = github_public_repo is not None
+        self.public_feed = public_feed is not None
+        if self.public_feed:
+            adapters.append(PublicFeedAdapter(public_feed))
         for adapter in adapters:
             self.registry.enable(adapter, tuple(Binding(a, ("read",)) for a in adapter.accounts))
             self.bindings.extend((adapter.manifest.service_id, a) for a in adapter.accounts)
@@ -206,7 +210,9 @@ class Handler(BaseHTTPRequestHandler):
             if "content-length" in h:
                 raise ValueError("unexpected body")
             if self.path == "/healthz":
-                self.reply(200, {"label": "public read-only GitHub + synthetic"
+                self.reply(200, {"label": "public read-only feeds + " +
+                                 ("GitHub + " if self.server.github_public else "") + "synthetic"
+                                 if self.server.public_feed else "public read-only GitHub + synthetic"
                                  if self.server.github_public else "synthetic-only"})
                 return
             if self.path in ASSETS:
@@ -220,10 +226,11 @@ class Handler(BaseHTTPRequestHandler):
                         data = stream.read()
                 finally:
                     os.close(directory)
-                if name == "index.html" and self.server.github_public:
+                if name == "index.html" and (self.server.github_public or self.server.public_feed):
                     data = data.replace(
                         "Synthetic demo — synthetic-only; no real sources linked".encode(),
-                        ("Public read-only GitHub + synthetic fixtures — "
+                        ("Public read-only " + ("feeds + " if self.server.public_feed else "") +
+                         ("GitHub + " if self.server.github_public else "") + "synthetic fixtures — "
                          "no private accounts or outgoing actions").encode())
                 self.reply(200, data, content_type)
                 return
@@ -249,7 +256,7 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(200, {"subject": identity.subject, "scope": identity.scope})
         elif self.path == "/api/services":
             self.reply(200, [{"service": s, "account": a, "capabilities": ["read"],
-                              "synthetic": s != "github-public"} for s, a in self.server.bindings])
+                              "synthetic": s not in ("github-public", "public-feed")} for s, a in self.server.bindings])
         elif self.path == "/api/logout":
             self.body(h, ())
             self.server.sessions.revoke(h["authorization"][7:])
@@ -290,6 +297,7 @@ def main(argv=None):
     serve.add_argument("--verifier", required=True)
     serve.add_argument("--db", required=True)
     serve.add_argument("--github-public-repo", metavar="OWNER/REPO")
+    serve.add_argument("--public-feed", metavar="HTTPS_URL", action="append")
     serve.add_argument("--port", type=int, default=18770)
     args = parser.parse_args(argv)
     try:
@@ -308,8 +316,12 @@ def main(argv=None):
         else:
             if not 1 <= args.port <= 65535:
                 raise ValueError("invalid port")
-            with LocalServer(verifier, args.db, args.port, args.github_public_repo) as server:
-                label = "Public read-only GitHub + synthetic" if server.github_public else "Synthetic-only"
+            if args.public_feed and len(args.public_feed) != 1:
+                raise ValueError("exactly one feed supported")
+            feed_options = {"public_feed": args.public_feed[0]} if args.public_feed else {}
+            with LocalServer(verifier, args.db, args.port, args.github_public_repo, **feed_options) as server:
+                label = ("Public read-only feeds + synthetic" if server.public_feed else
+                         "Public read-only GitHub + synthetic" if server.github_public else "Synthetic-only")
                 print(f"{label} application: {server.origin}", flush=True)
                 server.serve_forever()
     except (OSError, ValueError, sqlite3.Error, EOFError, getpass.GetPassWarning):
