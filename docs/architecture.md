@@ -121,3 +121,24 @@ instant; workflow IDs also include attempt/status. Store's existing transaction
 atomically commits events, `latest-v1` cursor and audit, and deduplicates replay.
 The rolling 30-per-source snapshot can miss updates and is not lossless history.
 No background collection, pagination, dispatch or GitHub authentication exists.
+
+## Public feed snapshots (Issue #32, parent #7)
+
+`adapters/public_feed.py:PublicFeedAdapter` implements SDK v1 with service
+`public-feed` and only `Capability('read', False, 'low')`. An explicit local serve
+option registers one canonical URL-derived account and read binding. Core Hub,
+Registry, Store and schema remain provider neutral and unchanged. Default startup
+registers no feed, and configured startup/GET never polls. Authenticated manual
+POST collection is the only feed request path; GitHub and feeds may coexist.
+
+The injectable transport returns an immutable five-field tuple (status,
+content-type, raw bytes, ETag, Last-Modified). The default transport pins a vetted
+DNS answer to a verified TLS socket; see the security document for restrictions.
+RSS channel items, Atom entries and JSON Feed v1/1.1 items normalize to inert
+`feed.item` events. IDs hash the canonical source, item ID (or deterministic safe
+text/link digest) and supplied timestamp. Poll receipt time never affects identity.
+Versioned JSON cursors replace validators on 200 and remain identical on 304;
+no established cursor resets to None. Every item, including items beyond the
+40-event output cap, is validated before returning the tuple. Snapshots are
+bounded and may miss history. No scheduling, retries or content URL traversal.
+The independent public Pages synthetic preview remains unchanged.

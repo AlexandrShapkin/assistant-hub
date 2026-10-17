@@ -342,3 +342,33 @@ never fetch GitHub. No secrets or GitHub credentials are accepted. Public data
 is persisted as plaintext locally; a previously public repository becoming private
 does not erase historical local snapshots. Anonymous rate limits and rolling
 snapshot gaps remain expected limitations.
+
+## Public feed reader (Issue #32)
+
+The optional `--public-feed HTTPS_URL` localhost source is read-only and manually
+polled behind the existing owner bearer/Origin boundary. No URL is exposed by
+public health/static endpoints. The account is a canonical hostname plus URL
+SHA-256; cursors contain only versioned bounded HTTP validators, never passwords.
+Do not configure secret-bearing URLs. Common credential query keys are rejected;
+that filter cannot establish that arbitrary query values are nonsecret.
+
+Each transport call resolves the configured host with `getaddrinfo`, rejects the
+entire answer set if any IP is nonglobal, private, reserved, multicast, link-local,
+loopback or mapped IPv4, then connects directly to one vetted numeric address.
+TLS uses the verified default context and the original canonical hostname for
+SNI and certificate validation. It never validates DNS then asks an HTTP client
+to resolve again. HTTP status is handled directly: redirects fail closed, with
+no proxy, cookie, token, redirect or embedded-resource machinery. Only port 443
+is allowed. Responses are bounded to 512 KiB, socket operations to eight seconds;
+compressed content is rejected and identity encoding requested.
+
+Only known XML/JSON content types and strict UTF-8 are accepted. XML DTD/entity
+declarations are rejected before ElementTree parsing; node, depth and item counts
+are bounded. JSON duplicate keys and nonfinite constants fail. All records are
+parsed and validated before a result is returned, preserving Store atomicity.
+Titles/bodies are control-sanitized and capped at 2000 characters, HTML is stripped
+where applicable, and the local UI uses textContent. Display links must pass the
+public URL validator and match the configured host; links are never followed.
+No scheduling, lossless history guarantee, production deployment or provider
+mutations are implemented. Tests mock external transports/DNS/sockets; they do
+not establish interoperability with any live feed.

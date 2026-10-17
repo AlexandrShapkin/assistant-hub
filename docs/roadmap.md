@@ -13,7 +13,8 @@
 - [#4](https://github.com/AlexandrShapkin/assistant-hub/issues/4) — Gmail read-only synchronization.
 - [#5](https://github.com/AlexandrShapkin/assistant-hub/issues/5) — Telegram user-account read-only integration.
 - [#6](https://github.com/AlexandrShapkin/assistant-hub/issues/6) — VK API capability assessment.
-- [#7](https://github.com/AlexandrShapkin/assistant-hub/issues/7) — general site, RSS and API ingestion.
+- [#7](https://github.com/AlexandrShapkin/assistant-hub/issues/7) — general site, RSS and API ingestion; remains OPEN until scheduling/backoff and general site APIs are completed.
+- [#32](https://github.com/AlexandrShapkin/assistant-hub/issues/32) — child of #7: optional manually polled public HTTPS RSS2/Atom/JSON Feed snapshots; owner-authenticated localhost collection, bounded reads and conditional validators, no actions.
 - [#8](https://github.com/AlexandrShapkin/assistant-hub/issues/8) — parent GitHub adapter scope remains open for private GitHub App authentication and revocation.
 - [#28](https://github.com/AlexandrShapkin/assistant-hub/issues/28) — optional anonymous public GitHub repository snapshots in the authenticated localhost app; bounded manual reads, no private access or dispatch.
 
@@ -43,7 +44,7 @@ event ingest, persisted cursors, SQLite state and deduplication, deterministic
 permissions, idempotent intent record, audit-only review, CLI, unit tests,
 CI and public-tree checks.
 
-Beyond the optional public GitHub reader, no real provider integration, external sending, model calls, deployments,
+Beyond the optional public GitHub and public feed readers, no real provider integration, external sending, model calls, deployments,
 production dates, provider compatibilities or license grants are claimed.
 
 See [development workflow](workflow.md) for Issue/PR lifecycle, testing,
