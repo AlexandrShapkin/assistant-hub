@@ -447,3 +447,27 @@ The upload is manual only; automatic polling of university timetable pages is
 not implemented, particularly where site crawling is disallowed by robots.txt.
 Test fixtures contain only synthetic classes; real exports may require a
 separate reviewed compatibility update. No private source URL is committed.
+
+## Opt-in iCalendar subscription (Issue #41)
+
+Scheduled iCal reads are **off** unless both owner-provided CLI flags are
+configured: --calendar-url-file and --calendar-interval 900..86400.
+Configuration comes from a 0600 owner-only regular file inside a 0700
+owner-owned directory, not argv URLs, public APIs, events or Git.
+Startup itself makes no external requests. The URL is not logged or returned
+by the browser API, and an unauthenticated request cannot change it.
+
+The read-only worker uses the same vetted public feed HTTPS transport with
+DNS pinning and certificate verification, no redirects, no ambient proxies
+and no nonpublic IP addresses. HTTP Accept requires text/calendar and the
+response is limited to a 96 KiB single-week UTF-8 calendar. Everything is
+validated before a transactional SQLite import. The worker holds the
+shared server lock only for persistence, not remote network I/O.
+HTTP validators/backoff are memory-only and reset on restart, but the first
+scheduled request is always delayed by a full interval.
+
+Automated collection from АлтГУ /timetable/ HTML is not enabled:
+the publisher's robots.txt disallows crawlers there. Only approved public
+calendar URLs should be configured. There is no session/cookie reuse,
+university authentication, CAPTCHA, scraping, HTML traversal, outgoing
+calendar mutation or real-world endpoint tested by these fixtures.

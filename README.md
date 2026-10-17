@@ -251,6 +251,44 @@ configuration. Uploaded files are not persisted separately, no remote URL is
 followed, and no personal timetable identifiers belong in Git or GitHub Pages.
 See [calendar security boundaries](docs/security.md#manual-weekly-icalendar-import-issue-41).
 
+## Optional approved HTTPS iCalendar subscription (Issue #41)
+
+Assistant Hub supports a **one-source, opt-in** automatic public iCalendar
+subscription when the publisher explicitly allows automated reads and provides
+a reusable URL. It is disabled by default. The one-week iCal export button
+does not by itself imply an automatically refreshing subscription URL. A
+download link may expire or only contain the snapshot from the day of export.
+
+The approved URL must reside in a file outside Git: owned by the service user,
+mode 0600, within an owner-owned 0700 directory (the existing private
+Assistant Hub directory qualifies). For instance, only if you have a
+provider-approved URL (this is an illustrative, **nonfunctional** example):
+
+    printf '%s\\n' 'https://calendar-provider.example.org/export/approved.ics' > \\
+      "$HOME/.local/share/assistant-hub-private/calendar-source.url"
+    chmod 600 "$HOME/.local/share/assistant-hub-private/calendar-source.url"
+
+Append both options to the existing localhost serve command:
+
+    --calendar-url-file "$HOME/.local/share/assistant-hub-private/calendar-source.url" \\
+    --calendar-interval 3600
+
+Polling starts after the first interval (900–86400 seconds), not on startup.
+A pinned-DNS, verified HTTPS transport accepts only text/calendar files, checks
+file size and complete single-week validity, rejects proxies and redirects,
+uses ETag/Last-Modified when present, and applies bounded retry backoff.
+Only the represented week is updated; older weeks remain in SQLite. No API
+exposes the source URL or lets a browser configure arbitrary remote targets.
+The UI shows when the local data was last refreshed, not a provider-certified
+timestamp. Manual uploads continue to work independently.
+
+**No authorized automated URL for the АлтГУ timetable has been identified.**
+The university's robots.txt disallows crawlers under /timetable/; do not set
+that page as a subscription source without permission. Provider-approved URL
+and real export-format compatibility remain prerequisites for automatic
+refresh of that particular timetable. See
+[security boundaries](docs/security.md#opt-in-icalendar-subscription-issue-41).
+
 ## GitHub App auth foundation (Issue #34)
 
 An isolated stdlib authentication module provides configured app/installation/

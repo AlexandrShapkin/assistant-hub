@@ -175,3 +175,13 @@ The local-calendar identity has no `read` registry binding or scheduled
 worker; clicking Collect does not fetch the timetable website.
 The currently supported format has no recurrence expansion or official
 university API connector. Private owner data never enters GitHub Pages.
+
+## Optional iCalendar URL poller (Issue #41)
+
+calendar_sync.py reads a trusted owner-private URL file and schedules one
+read-only iCalendar source after an explicit interval. The transport
+reuses DNS-pinned public HTTPS request handling; it validates a full week
+before the same Store.import_calendar_week transaction used by manual imports.
+Provider I/O is outside the owner/API lock, while SQLite writes are serialized.
+This does not grant permission to crawl any university site and does not
+configure the user's actual timetable until a permitted feed/API is known.

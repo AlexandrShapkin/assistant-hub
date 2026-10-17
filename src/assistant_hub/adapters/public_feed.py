@@ -74,7 +74,7 @@ def validator(value, date=False):
     return value
 
 
-def get_public(url, headers):
+def get_public(url, headers, *, accept=None):
     """Resolve once, reject every unsafe answer, connect to a vetted numeric IP."""
     url = public_url(url)
     p = urlsplit(url)
@@ -93,7 +93,10 @@ def get_public(url, headers):
             raw.settimeout(8)
             raw.connect(address)
             conn.sock = conn._context.wrap_socket(raw, server_hostname=p.hostname)
-            safe = {'Accept': ', '.join(sorted(TYPES)), 'Accept-Encoding': 'identity',
+            if accept not in (None, 'text/calendar'):
+                raise ValueError()
+            safe = {'Accept': accept if accept else ', '.join(sorted(TYPES)),
+                    'Accept-Encoding': 'identity',
                     'User-Agent': 'assistant-hub-public-feed/1'}
             for name, value in headers.items():
                 if name not in ('If-None-Match', 'If-Modified-Since'):
