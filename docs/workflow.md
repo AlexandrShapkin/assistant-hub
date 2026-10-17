@@ -40,8 +40,14 @@ From repository root:
     python scripts/check_public_tree.py --include-untracked
     git diff --check
 
-CI validates Python 3.11, 3.12, 3.13. A green local run on another version
-does not substitute for CI evidence on those versions.
+CI validates Python 3.11, 3.12, 3.13. Workflow triggers on PRs against
+main and on merged main pushes; avoid duplicate check names from feature-branch
+pushes. The main branch is intended to require a PR and all three checks,
+with **zero required human reviews**, so routine work proceeds autonomously.
+Verify enforcement in GitHub settings rather than relying on this document.
+A green local run on another version does not substitute for CI evidence.
+If GitHub branch protection is unavailable, record that limitation rather than
+claiming it is enabled.
 
 ## Priorities and labels
 
