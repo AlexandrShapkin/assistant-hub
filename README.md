@@ -57,8 +57,9 @@ python3 -m http.server 8765 --bind 127.0.0.1 --directory web
 
 Open `http://127.0.0.1:8765`. All content is synthetic; state resets on refresh.
 No external data, credentials, browser persistence or application network calls
-are used. Auth/logout, real APIs, a public site and real browser access to private
-data are NOT implemented. The static file server is only a local viewing tool.
+are used. Auth/logout, real APIs, an authenticated application and browser access to private
+data are NOT implemented. A separate Pages workflow may publish the static
+synthetic preview; no user or provider data is available there. The static file server is only a local viewing tool.
 
 ## Offline password proof (synthetic only)
 
