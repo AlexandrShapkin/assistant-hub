@@ -23,6 +23,12 @@
 - [#20](https://github.com/AlexandrShapkin/assistant-hub/issues/20) — [offline synthetic UI preview](../web/README.md), related to #3; implemented and verified in PR #21. No authentication or real API access.
 - [#22](https://github.com/AlexandrShapkin/assistant-hub/issues/22) — verified public static preview from PR #23; no private data or backend.
 
+- [#26](https://github.com/AlexandrShapkin/assistant-hub/issues/26) — local authenticated
+  browser/API/SQLite vertical slice: scoped memory-only bearer sessions, explicitly
+  read-bound synthetic collection, durable per-event workflow statuses and audit.
+  Separate `local_web/` app; public offline preview unchanged. Local verification
+  requires loopback sockets; implementation does not certify production readiness.
+
 ## M3 — Automation
 
 - [#9](https://github.com/AlexandrShapkin/assistant-hub/issues/9) — isolated remote-device agent contracts.

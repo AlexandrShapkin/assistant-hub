@@ -32,6 +32,11 @@ class Store:
             CREATE TABLE IF NOT EXISTS events (
                 service TEXT, account TEXT, external_id TEXT, data TEXT NOT NULL,
                 PRIMARY KEY(service, account, external_id));
+            CREATE TABLE IF NOT EXISTS event_states (
+                service TEXT, account TEXT, external_id TEXT,
+                status TEXT NOT NULL CHECK(status IN ('new','review','deferred','done')),
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY(service, account, external_id));
             CREATE TABLE IF NOT EXISTS cursors (
                 service TEXT, account TEXT, cursor TEXT,
                 PRIMARY KEY(service, account));
@@ -106,3 +111,30 @@ class Store:
 
     def audit(self) -> list[dict]:
         return [dict(row) for row in self.db.execute("SELECT * FROM audit ORDER BY id")]
+
+    def inbox_with_status(self) -> list[dict]:
+        """UI workflow state is separate from event content and action policy."""
+        return [dict(json.loads(row["data"]), status=row["status"],
+                     updated_at=row["updated_at"]) for row in self.db.execute(
+            "SELECT e.data, COALESCE(s.status, 'new') AS status, s.updated_at "
+            "FROM events e LEFT JOIN event_states s USING(service, account, external_id) "
+            "ORDER BY e.service, e.account, e.external_id")]
+
+    def set_status(self, service: str, account: str, external_id: str,
+                   status: str, actor: str) -> None:
+        if (any(not isinstance(v, str) or not v.strip() or len(v) > 256
+                for v in (service, account, external_id, actor)) or
+                status not in ("new", "review", "deferred", "done")):
+            raise ValueError("invalid workflow status")
+        identity = (service, account, external_id)
+        with self.db:
+            if self.db.execute(
+                    "SELECT 1 FROM events WHERE service=? AND account=? AND external_id=?",
+                    identity).fetchone() is None:
+                raise ValueError("unknown event")
+            self.db.execute(
+                "INSERT INTO event_states(service, account, external_id, status) "
+                "VALUES (?, ?, ?, ?) ON CONFLICT(service, account, external_id) "
+                "DO UPDATE SET status=excluded.status, updated_at=CURRENT_TIMESTAMP",
+                (*identity, status))
+            self._audit("status", encode(identity), encode({"status": status, "actor": actor}))

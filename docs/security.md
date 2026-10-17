@@ -1,9 +1,9 @@
 # Security assumptions and limitations
 
-This is not production software. It has no external dispatch, network access,
+This is not production software. It has no external dispatch, external network access,
 real provider credentials or language-model permission path. The independent
 `security` package checks session request proofs and a synthetic owner-password
-login admission proof offline; it is not wired into the CLI or core.
+login admission proof, now also used by the separate localhost application below.
 Untrusted event text is data and cannot create approval rules or capabilities.
 Rules must come from trusted application code after explicit user approval;
 `approved_by` is a local claim, not cryptographic proof. Reviewers are likewise
@@ -236,3 +236,81 @@ Restoring an older verifier restores its older password; rotate before admission
 if that backup predates revocation or compromise. No backup encryption, freshness
 tracking, automation, vault encryption, 2FA, production login or production-ready
 security is implemented. Core account authorization remains separate.
+
+
+## Localhost application (Issue #26)
+
+Scope and acceptance: browser → authenticated stdlib API → Hub/Registry → Store
+→ SQLite, with explicit synthetic collection, durable account-isolated status,
+audit, logout, bounded requests and safe static assets. Non-goals are public
+hosting, TLS provisioning, provider onboarding, event uploads, model permission
+paths and any dispatch. Setup commands and the exact browser URL are in the
+[root README](../README.md#local-authenticated-application-issue-26).
+
+`local_server` binds only `127.0.0.1` without DNS lookup, requires explicit absolute verifier and DB
+paths, and refuses startup without a readable owner verifier. The verifier parent
+must be a trusted, owner-owned 0700 directory; the existing `VerifierStore` checks
+ownership/modes, no-follow final components and exclusive bootstrap creation.
+The local entry point additionally enforces exactly 0700 on the verifier parent
+and refuses getpass fallback when terminal input cannot be hidden.
+Intermediate ancestry and concurrent hostile filesystem changes remain outside
+its protection. Store rejects final-file symlinks and sets DB mode 0600, but
+**does not enforce ownership or 0700 on an existing database parent**. Provision
+both files in a trusted private directory. No permission repair is performed.
+
+All parsed routes validate raw headers for duplicates, syntax and bounded sizes,
+require exact `Host: localhost:PORT`, reject cookies and transfer encoding, and
+reject any supplied foreign Origin. POST login requires exact
+`Origin: http://localhost:PORT`; authenticated POST additionally uses the existing
+`RequestGuard(allow_localhost_http=True)` in bearer mode and `local-web` scope.
+A POST with no Origin fails closed, including from browser environments that
+omit it. Nonbrowser clients can forge Host/Origin, so these checks complement
+rather than replace password/session authentication. Login uses one shared
+per-owner `LoginService`: five attempts per 60 seconds, including successes;
+process restart resets this local budget. Errors are generic; request targets,
+headers, passwords and tokens are never logged. No access logs or stack traces
+are emitted by the server. Standard-library parser errors also use generic
+responses. Request bodies are capped at 16 KiB with strict UTF-8, JSON object,
+exact key/type checks, duplicate-key rejection and exact `application/json`.
+
+GET browser fetches normally omit Origin. Unlike POST, they do not pass through
+RequestGuard's strict Origin requirement: they use the same raw header checks,
+exact Host, no cookie, an optional exact Origin and exact `Authorization: Bearer`
+proof validated by `SessionManager.authorize(mode='bearer', scope='local-web')`.
+No Origin is fabricated. Bearer headers are deliberately added by the module;
+they are not ambient cookie authority. GET never collects, updates or logs out.
+`/healthz` is public and contains only `synthetic-only`; the public application
+shell contains no event content. Every data API requires authentication.
+
+Tokens are delivered only in login JSON and held only in module memory, never
+cookies, local/session storage or URLs. Refresh logs out; logout revokes the
+session; process restart loses all grants. No CORS allow-origin header exists.
+CSP permits only same-origin scripts, styles and API connections, denies frames,
+forms, workers and external assets. Responses also set `nosniff`, `no-store` and
+frame denial. Static serving is an exact four-path allowlist from `local_web/`,
+with no-follow directory/file opens, regular-file checks and no filesystem path
+construction from user input. Traversal, encoded paths, query strings and unknown
+files deny. Database, repository and verifier are never served.
+
+One server lock serializes authorization, logout, collection and status changes;
+each DB operation opens/closes its own SQLite connection in its request thread.
+SessionManager also has its own lock. This is not a scalable server or denial of
+service defense: threads and connection admission are not globally bounded;
+slow clients have a five-second socket timeout. Use one process with synthetic
+data on a trusted host only. Browser extensions, XSS, host compromise and other
+local processes are outside this demo's protection. No production/public TLS,
+reverse proxy, remote deployment or VPS changes are included.
+
+Status is independent UI workflow metadata, never approval or dispatch authority.
+Composite service/account/event IDs isolate rows. Event existence is checked
+before upsert; status and audit (including authenticated owner actor) commit or
+roll back together. Repeating a status keeps one current state row and appends
+an audit observation. State remains plaintext and owner-editable. No executor
+or event-upload endpoint exists; collection uses only explicitly read-bound
+DemoAdapter/BulletinAdapter. No real provider is linked.
+
+Validation: `tests/test_local_server.py` uses ephemeral real loopback HTTP,
+private temporary directories and a synthetic test password. Run the repository
+checks plus `node --check src/assistant_hub/local_web/app.mjs` and
+`node --test web/tests/*.test.mjs`. These tests require a host permitting local
+sockets; a sandbox socket denial is a validation blocker, not evidence of success.
