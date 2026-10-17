@@ -18,6 +18,11 @@ ES modules require this local static server; opening the HTML as a file is not
 supported. No installation, npm packages, credentials or external data are needed.
 The local server only delivers the preview files; this is not a backend service.
 
+The interface starts in Russian. Choose RU or EN in the top bar to switch
+languages without reloading the page. Language preference remains in memory only
+and resets to Russian on refresh. All 12 fictional events have Russian display
+texts; source/account/ID and workflow state remain provider-neutral and stable.
+
 Search event content and service names; combine service, account, status and
 priority filters. Sort by recency or importance, select an item and organize it
 as done, deferred or for review. Proposed actions demonstrate a local draft,
@@ -38,7 +43,7 @@ is normal local navigation. A restrictive CSP blocks connection and worker use.
 
 Authentication, login/logout, real APIs and browser access to private data
 are NOT implemented. A separate GitHub Pages workflow can publicly serve ONLY
-the six allowlisted static demo files after explicit repository setup. The
+the seven allowlisted static demo files after explicit repository setup. The
 public preview is not an authenticated application and cannot access accounts. This preview is independent of the Python
 security proofs and core policy; do not enter private data or expose it as a real
 application. No real decisions take effect.
@@ -49,10 +54,12 @@ Run the dependency-free checks with Node 22:
 node --check web/app.mjs
 node --check web/view-model.mjs
 node --check web/demo-data.mjs
+node --check web/i18n.mjs
 node --check web/tests/view-model.test.mjs
+node --check web/tests/i18n.test.mjs
 node --test web/tests/*.test.mjs
 ```
 
 Tests cover identity separation, filtering, sorting, immutable transitions,
 invalid operation denial, generic services and static checks for prohibited
-browser APIs. Static checks do not replace browser accessibility/visual review.
+browser APIs, both locales, locale fallback, and identity preservation. Static checks do not replace browser accessibility/visual review.
