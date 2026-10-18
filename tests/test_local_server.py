@@ -91,6 +91,33 @@ class LocalServerTests(unittest.TestCase):
         self.assertEqual(self.server.server_address[0], "127.0.0.1")
         self.assertEqual(self.request("/healthz", origin=False), (200, {"label": "synthetic-only"}))
 
+    def test_development_reports_and_controls_auth_restart(self):
+        from tests.test_development import report
+        from uuid import uuid4
+        obj = report()
+        control = dict(message_id=str(uuid4()), task_id=obj["task_id"], action="pause")
+        self.assertEqual(self.request("/api/development", origin=False)[0], 401)
+        for path, body in (("/api/development/report", obj), ("/api/development/control", control)):
+            self.assertEqual(self.request(path, body)[0], 401)
+        self.login()
+        for path, body in (("/api/development/report", obj), ("/api/development/control", control)):
+            self.assertEqual(self.request(path, body, origin=False)[0], 403)
+            self.assertEqual(self.request(path, body, origin="http://evil.invalid")[0], 403)
+        self.assertEqual(self.request("/api/development/report", obj)[0], 200)
+        self.assertEqual(self.request("/api/development/control", control),
+                         (200, {"delivery": "pending", "replayed": False}))
+        self.assertEqual(self.request("/api/development/report", obj | {"sequence": "2"})[0], 400)
+        self.stop()
+        self.start()
+        self.assertEqual(self.request("/api/development", origin=False)[0], 401)
+        self.token = None
+        self.login()
+        code, snapshot = self.request("/api/development", origin=False)
+        self.assertEqual(code, 200)
+        self.assertEqual(snapshot["tasks"][0]["status"], "running")
+        self.assertEqual(snapshot["events"][0]["kind"], "control_request")
+        self.assertFalse(snapshot["executor_connected"])
+
     def test_login_valid_and_scope(self):
         self.login()
         self.assertEqual(self.request("/api/session", origin=False),

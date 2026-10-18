@@ -22,6 +22,7 @@ from .core.demo import BulletinAdapter, DemoAdapter
 from .core.hub import Hub
 from .core.registry import Binding, Registry
 from .core.store import Store
+from .development import DevelopmentLedger, REPORT_FIELDS, CONTROL_FIELDS
 from .security import RequestGuard, SessionManager
 from .security.credentials import LoginService, VerifierStore
 
@@ -33,6 +34,7 @@ ASSETS = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.mjs": ("app.mjs", "text/javascript; charset=utf-8"),
           "/i18n.mjs": ("i18n.mjs", "text/javascript; charset=utf-8"),
           "/calendar_overview.mjs": ("calendar_overview.mjs", "text/javascript; charset=utf-8"),
+          "/development.mjs": ("development.mjs", "text/javascript; charset=utf-8"),
           "/styles.css": ("styles.css", "text/css; charset=utf-8")}
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
        "connect-src 'self'; img-src 'none'; font-src 'none'; object-src 'none'; "
@@ -244,9 +246,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(200, data, content_type)
                 return
         routes = { "GET": {"/api/inbox", "/api/services", "/api/session",
-                         "/api/calendar/weeks", "/api/calendar/changes"},
+                         "/api/calendar/weeks", "/api/calendar/changes", "/api/development"},
                   "POST": {"/api/login", "/api/collect", "/api/status", "/api/logout",
-                           "/api/calendar/import"}}
+                           "/api/calendar/import", "/api/development/report", "/api/development/control"}}
         if self.path not in routes.get(self.command, set()):
             self.reply(404, {"error": "request denied"})
             return
@@ -290,7 +292,15 @@ class Handler(BaseHTTPRequestHandler):
         else:
             store = Store(self.server.db_path)
             try:
-                if self.path == "/api/inbox":
+                if self.path == "/api/development":
+                    self.reply(200, DevelopmentLedger(store).snapshot())
+                elif self.path == "/api/development/report":
+                    obj = self.body(h, REPORT_FIELDS, max_field_length=128)
+                    self.reply(200, DevelopmentLedger(store).report(obj, actor=identity.subject))
+                elif self.path == "/api/development/control":
+                    obj = self.body(h, CONTROL_FIELDS, max_field_length=128)
+                    self.reply(200, DevelopmentLedger(store).control(obj, actor=identity.subject))
+                elif self.path == "/api/inbox":
                     self.reply(200, store.inbox_with_status())
                 elif self.path == "/api/calendar/weeks":
                     self.reply(200, store.calendar_weeks())

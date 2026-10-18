@@ -1,5 +1,9 @@
 # Assistant Hub
 
+Issue #52: [persistent authenticated development reports and pending controls](docs/development-dashboard.md)
+are available in the localhost application. Executor delivery and verified PR/CI
+remain follow-up work.
+
 **Pre-alpha, nonproduction scaffold.** A Python 3.11+ standard-library-only
 prototype for collecting account-scoped events and recording permission decisions.
 The default adapters are **fake, synthetic fixtures**. Optional public GitHub reads
