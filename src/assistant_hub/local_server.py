@@ -272,6 +272,13 @@ class Handler(BaseHTTPRequestHandler):
             # Import-only: never offer this identity to the automatic/manual poller.
             bindings.append({"service": CALENDAR_SERVICE, "account": CALENDAR_ACCOUNT,
                              "capabilities": [], "synthetic": False})
+            store = Store(self.server.db_path)
+            try:
+                for account in store.local_google_accounts():
+                    bindings.append({"service": "google-calendar", "account": account,
+                                     "capabilities": [], "synthetic": False})
+            finally:
+                store.close()
             self.reply(200, bindings)
         elif self.path == "/api/logout":
             self.body(h, ())

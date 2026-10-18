@@ -207,3 +207,16 @@ auth secrets or direct Google HTTP requests. No automatic sync starts with
 the service, and no Google events are mutated. Independent user-approved
 OAuth, calendar allowlist, polling and opted-in lesson publication remain
 future stages.
+
+## Owner-only Google OAuth and single-pass Calendar API (#46)
+
+google_oauth.py performs Desktop PKCE authorization on the physical ThinkPad
+with loopback 127.0.0.1 callback, random state, trusted Google endpoints,
+no redirect or ambient proxy and an owner-private 0600 refresh grant.
+google_calendar_api.py provides a one-shot fixed-host HTTPS GET client
+for up to eight explicitly allowed private calendars, using the existing
+validated/transactional Google Calendar mirror. local_server exposes only
+mirrored calendar accounts to an authenticated owner as read-only local
+data; it cannot initiate Google OAuth or collect Google API data on demand.
+There is no Google write capability or background service installed.
+See docs/google-calendar-setup.md.

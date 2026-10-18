@@ -96,6 +96,25 @@ class LocalServerTests(unittest.TestCase):
         self.assertEqual(self.request("/api/session", origin=False),
                          (200, {"subject": "owner", "scope": "local-web"}))
 
+    def test_google_mirror_in_owner_inbox_but_never_manual_collect(self):
+        from tests.test_google_calendar_mirror import full, row
+        from assistant_hub.google_calendar_mirror import account_for, apply_google_pages
+        identity = "fictional.calendar@example.invalid"
+        self.assertEqual(self.request("/api/services", origin=False)[0], 401)
+        with contextlib.closing(Store(self.db)) as store:
+            apply_google_pages(store, identity, full(row()), initial=True)
+        self.login()
+        account = account_for(identity)
+        services = self.request("/api/services")[1]
+        self.assertIn({"service": "google-calendar", "account": account,
+                       "capabilities": [], "synthetic": False}, services)
+        records = self.request("/api/inbox")[1]
+        self.assertEqual(len([r for r in records if r["service_id"] == "google-calendar"]), 1)
+        self.assertEqual(self.collect("google-calendar", account)[0], 400)
+        self.assertEqual(self.request("/api/collect", {"service": "google-calendar",
+                                                    "account": account})[0], 400)
+        self.assertNotIn(identity, json.dumps(records))
+
     def test_calendar_manual_import_authenticated_atomic_and_local_only(self):
         from tests.test_calendar_import import calendar, event
         from assistant_hub.calendar_import import SERVICE, ACCOUNT
