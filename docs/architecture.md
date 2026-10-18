@@ -174,6 +174,12 @@ initial weekly imports create no alerts and source-provenance-only changes do
 not appear as timetable changes. GET /api/calendar/changes requires owner
 authentication. The local UI presents seven weekday groups and a per-week
 change history, with an explicit local-only Refresh saved data action.
+A pure JavaScript calendar_overview module computes current Monday
+using Asia/Barnaul civil time regardless of device timezone, prefers the
+current/upcoming week, checks the 48-hour import snapshot age, and derives
+up to three future lessons from already authenticated inbox data across
+two weeks. The dashboard has no remote calls, timers, subscriptions,
+notifications or real provider freshness guarantee.
 
 This input is an **import**, not an adapter polling a remote provider.
 The local-calendar identity has no `read` registry binding or scheduled

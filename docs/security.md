@@ -289,7 +289,7 @@ cookies, local/session storage or URLs. Refresh logs out; logout revokes the
 session; process restart loses all grants. No CORS allow-origin header exists.
 CSP permits only same-origin scripts, styles and API connections, denies frames,
 forms, workers and external assets. Responses also set `nosniff`, `no-store` and
-frame denial. Static serving is an exact five-path allowlist from `local_web/`,
+frame denial. Static serving is an exact six-path allowlist from `local_web/`,
 with no-follow directory/file opens, regular-file checks and no filesystem path
 construction from user input. Traversal, encoded paths, query strings and unknown
 files deny. Database, repository and verifier are never served.
@@ -447,6 +447,14 @@ alerts; subsequent updates, additions and removals share the week import
 transaction. Source/provenance-only changes do not generate false alerts.
 The browser renders all change details with textContent and does not poll
 the university or other external services when showing/refreshing changes.
+Current-week, recent/old-snapshot and upcoming-lesson summaries are
+derived entirely within a locally served JavaScript module after bearer
+authentication, never from unauthenticated public responses. Calculations
+use Asia/Barnaul civil dates, not arbitrary browser timezone. A recent
+local import does not certify that the upstream timetable is up-to-date;
+missing/stale warnings avoid implying a complete schedule. The module
+cannot make network requests, schedule a background poll, store a session,
+or expose calendar records to public GitHub Pages.
 
 Every import is a single SQLite transaction, with stable per-week UID hashes,
 audit counts, and replacement/removal limited to the specified week. Deleting

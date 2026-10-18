@@ -1,4 +1,7 @@
 import { DEFAULT_LOCALE, LOCALES, t, formatDate } from './i18n.mjs';
+import {
+  preferredCalendarWeek, weekSnapshotState, upcomingCalendarLessons,
+} from './calendar_overview.mjs';
 // Session proof stays in this module's memory. Refresh deliberately logs out.
 let token = null;
 let events = [];
@@ -30,6 +33,8 @@ function loggedOut() {
   $('calendar-file').value = '';
   $('calendar-days').replaceChildren();
   $('calendar-changes').replaceChildren();
+  $('calendar-upcoming').replaceChildren();
+  $('calendar-snapshot-status').textContent = '';
   $('items').replaceChildren();
   $('details').replaceChildren();
   $('workspace').hidden = true;
@@ -103,6 +108,30 @@ function details() {
   target.append(label, select, save);
 }
 const calendarRecords = () => events.filter(e => e.service_id === 'local-calendar' && e.account_id === 'weekly-ics');
+function calendarOverviewRender() {
+  const snapshot = weekSnapshotState(calendarWeeks);
+  const stateText = {
+    missing: 'calendarSnapshotMissing', stale: 'calendarSnapshotStale',
+    recent: 'calendarSnapshotRecent', unknown: 'calendarSnapshotUnknown',
+  }[snapshot.state];
+  $('calendar-snapshot-status').textContent = tr(stateText, {week: snapshot.week});
+  const upcoming = $('calendar-upcoming');
+  upcoming.replaceChildren();
+  const next = upcomingCalendarLessons(calendarRecords());
+  if (!next.length) {
+    upcoming.append(element('p', tr('calendarUpcomingNone')));
+    return;
+  }
+  for (const lesson of next) {
+    const row = element('div', '');
+    row.className = 'calendar-upcoming-item';
+    row.append(element('small', [lesson.attributes.date_local,
+      lesson.attributes.time_local].filter(Boolean).join(' · ')));
+    row.append(element('strong', lesson.title));
+    if (lesson.attributes.location) row.append(element('small', lesson.attributes.location));
+    upcoming.append(row);
+  }
+}
 function calendarChangeSummary(lesson) {
   if (!lesson) return '';
   return [lesson.date, lesson.time, lesson.title, lesson.location].filter(Boolean).join(' · ');
@@ -135,7 +164,7 @@ function calendarRender() {
   const weeks = $('calendar-week');
   weeks.replaceChildren();
   const current = calendarWeeks.find(w => w.week === selectedWeek);
-  if (!current && calendarWeeks.length) selectedWeek = calendarWeeks[0].week;
+  if (!current) selectedWeek = preferredCalendarWeek(calendarWeeks);
   for (const week of calendarWeeks) {
     const option = element('option', week.week);
     option.value = week.week;
@@ -143,6 +172,7 @@ function calendarRender() {
   }
   weeks.value = selectedWeek || '';
   weeks.disabled = !calendarWeeks.length;
+  calendarOverviewRender();
   const place = $('calendar-days');
   place.replaceChildren();
   const entry = calendarWeeks.find(w => w.week === selectedWeek);

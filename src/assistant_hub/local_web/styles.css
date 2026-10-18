@@ -22,3 +22,10 @@
 .calendar-change strong{display:block}
 .calendar-change small{display:block;color:#53675e}
 .calendar-change p{margin:.2rem 0;overflow-wrap:anywhere}
+
+.calendar-snapshot-status{margin:.8rem 0;padding:.65rem .85rem;border-left:3px solid #789083;background:#f8faf7}
+.calendar-next{margin:.8rem 0 1rem;border:1px solid #dbe3de;border-radius:.6rem;padding:1rem}
+.calendar-next h3{font-size:1rem;margin:0 0 .4rem}
+.calendar-upcoming-item{border-top:1px solid #dbe3de;padding:.5rem 0}
+.calendar-upcoming-item strong,.calendar-upcoming-item small{display:block}
+.calendar-upcoming-item small{color:#53675e}
