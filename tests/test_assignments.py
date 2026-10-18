@@ -60,9 +60,9 @@ class AssignmentLedgerTests(unittest.TestCase):
 
     def test_cancel_request_not_terminal(self):
         self.ledger.assign("task", "executor", 1, "key")
-        self.event(1, "cancel_requested")
+        self.assertTrue(self.ledger.request_cancel("task", 1))
         self.assertEqual(self.ledger.status("task")["state"], "cancel_requested")
-        self.event(2, "cancelled")
+        self.event(1, "cancelled")
         self.assertEqual(self.ledger.status("task")["state"], "cancelled")
 
 
@@ -112,3 +112,54 @@ class DurableOutboxTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ledger.lease("task", 2, 120, 100)
         self.assertEqual(self.ledger.status("task")["state"], "pending")
+
+
+class CancellationAndRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.store = Store(Path(self.tmp.name) / "hub.db")
+        self.ledger = AssignmentLedger(self.store)
+        self.ledger.assign("task", "worker", 1, "key")
+
+    def tearDown(self):
+        self.store.close()
+        self.tmp.cleanup()
+
+    def event(self, seq, kind):
+        return self.ledger.record_event("task", str(uuid4()), seq, 1, kind)
+
+    def test_running_cancellation_requires_terminal_event(self):
+        self.event(1, "accepted")
+        self.event(2, "started")
+        self.assertTrue(self.ledger.request_cancel("task", 1))
+        self.assertFalse(self.ledger.request_cancel("task", 1))
+        self.assertEqual(self.ledger.status("task")["state"], "cancel_requested")
+        self.event(3, "cancelled")
+        self.assertEqual(self.ledger.status("task")["state"], "cancelled")
+
+    def test_expired_job_recovers_from_observed_status(self):
+        self.ledger.lease("task", 1, 20, 10)
+        self.assertEqual(self.ledger.reconcile_expired(20), ["task"])
+        self.assertFalse(self.ledger.reconcile_status("task", 1, "not_found"))
+        self.assertEqual(self.ledger.status("task")["state"], "needs_reconciliation")
+        with self.assertRaises(ValueError):
+            self.ledger.reconcile_status("task", 2, "running")
+        self.assertTrue(self.ledger.reconcile_status("task", 1, "running"))
+        self.assertEqual(self.ledger.status("task")["state"], "running")
+        with self.assertRaises(ValueError):
+            self.ledger.reconcile_status("task", 1, "completed")
+
+    def test_cancel_rejects_terminal_and_stale_generation(self):
+        with self.assertRaises(ValueError):
+            self.ledger.request_cancel("task", 2)
+        self.event(1, "accepted")
+        self.event(2, "started")
+        self.event(3, "completed")
+        with self.assertRaises(ValueError):
+            self.ledger.request_cancel("task", 1)
+
+    def test_duplicate_event_rejects_generation_mismatch(self):
+        message_id = str(uuid4())
+        self.assertTrue(self.ledger.record_event("task", message_id, 1, 1, "accepted"))
+        with self.assertRaises(ValueError):
+            self.ledger.record_event("task", message_id, 1, 2, "accepted")

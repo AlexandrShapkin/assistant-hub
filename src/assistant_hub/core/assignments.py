@@ -25,6 +25,7 @@ class AssignmentLedger:
                     task_id TEXT NOT NULL REFERENCES executor_assignments(task_id),
                     sequence INTEGER NOT NULL CHECK(sequence > 0),
                     kind TEXT NOT NULL,
+                    generation INTEGER NOT NULL,
                     UNIQUE(task_id, sequence));
                 CREATE TABLE IF NOT EXISTS executor_outbox (
                     task_id TEXT PRIMARY KEY REFERENCES executor_assignments(task_id),
@@ -65,7 +66,6 @@ class AssignmentLedger:
             'progress': ('running', 'running'),
             'completed': ('running', 'completed'),
             'failed': ('running', 'failed'),
-            'cancel_requested': ('pending', 'cancel_requested'),
             'cancelled': ('cancel_requested', 'cancelled'),
         }
         if (kind not in transitions or type(sequence) is not int or sequence < 1
@@ -77,10 +77,10 @@ class AssignmentLedger:
             raise ValueError("invalid message id") from None
         with self.db:
             old = self.db.execute(
-                "SELECT task_id, sequence, kind FROM executor_events WHERE message_id=?",
+                "SELECT task_id, sequence, kind, generation FROM executor_events WHERE message_id=?",
                 (message_id,)).fetchone()
             if old:
-                if tuple(old) != (task_id, sequence, kind):
+                if tuple(old) != (task_id, sequence, kind, generation):
                     raise ValueError("conflicting message id")
                 return False
             row = self.db.execute(
@@ -91,11 +91,13 @@ class AssignmentLedger:
             if sequence <= row["last_sequence"]:
                 raise ValueError("out-of-order event")
             required, new_state = transitions[kind]
-            if row["state"] != required:
+            if kind == 'cancelled' and row['state'] == 'cancel_requested':
+                pass
+            elif row["state"] != required:
                 raise ValueError("invalid state transition")
             self.db.execute(
-                "INSERT INTO executor_events VALUES (?, ?, ?, ?)",
-                (message_id, task_id, sequence, kind))
+                "INSERT INTO executor_events VALUES (?, ?, ?, ?, ?)",
+                (message_id, task_id, sequence, kind, generation))
             self.db.execute(
                 "UPDATE executor_assignments SET state=?, last_sequence=? WHERE task_id=?",
                 (new_state, sequence, task_id))
@@ -116,7 +118,7 @@ class AssignmentLedger:
             "WHERE o.delivered=0 AND a.state='pending' ORDER BY o.rowid")]
 
     def mark_delivered(self, task_id):
-        """Transport acknowledgement is not executor acceptance."""
+        """Local transport receipt, not executor acceptance."""
         with self.db:
             return bool(self.db.execute(
                 "UPDATE executor_outbox SET delivered=1 "
@@ -153,3 +155,41 @@ class AssignmentLedger:
                 "WHERE lease_deadline IS NOT NULL AND lease_deadline<=? "
                 "AND state IN ('pending','accepted','running')", (now,))
             return [row["task_id"] for row in rows]
+
+    def request_cancel(self, task_id, generation):
+        """Record a cancellation request, never assume termination."""
+        if type(generation) is not int or generation < 1:
+            raise ValueError("invalid generation")
+        with self.db:
+            row = self.db.execute(
+                "SELECT generation, state FROM executor_assignments WHERE task_id=?",
+                (task_id,)).fetchone()
+            if not row or row["generation"] != generation:
+                raise ValueError("unknown task or generation")
+            if row["state"] == "cancel_requested":
+                return False
+            if row["state"] not in ("pending", "accepted", "running"):
+                raise ValueError("cannot cancel terminal or uncertain task")
+            self.db.execute(
+                "UPDATE executor_assignments SET state='cancel_requested' "
+                "WHERE task_id=?", (task_id,))
+            return True
+
+    def reconcile_status(self, task_id, generation, executor_state):
+        """A verified status observation only; no implicit redispatch."""
+        if executor_state not in ("accepted", "running", "completed", "failed",
+                                  "cancelled", "not_found"):
+            raise ValueError("invalid executor state")
+        with self.db:
+            row = self.db.execute(
+                "SELECT generation, state FROM executor_assignments WHERE task_id=?",
+                (task_id,)).fetchone()
+            if not row or row["generation"] != generation or (
+                    row["state"] != "needs_reconciliation"):
+                raise ValueError("reconciliation not eligible")
+            if executor_state == "not_found":
+                return False
+            self.db.execute(
+                "UPDATE executor_assignments SET state=?, lease_deadline=NULL "
+                "WHERE task_id=?", (executor_state, task_id))
+            return True
