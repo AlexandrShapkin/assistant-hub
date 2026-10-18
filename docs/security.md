@@ -488,3 +488,17 @@ the publisher's robots.txt disallows crawlers there. Only approved public
 calendar URLs should be configured. There is no session/cookie reuse,
 university authentication, CAPTCHA, scraping, HTML traversal, outgoing
 calendar mutation or real-world endpoint tested by these fixtures.
+
+## Offline Google Calendar mirror foundation (Issue #46)
+
+This module is inert unless a future explicitly authorized component calls it.
+There is no Google OAuth client, token, network transport, scheduled worker or
+write capability yet. ChatGPT's Google connection is not a VPS grant.
+
+Already fetched Google API pages are validated as a complete bounded snapshot
+before any private SQLite transaction. Calendar IDs map to stable opaque
+account keys. Event updates preserve local workflow status; removals,
+cancellations and full resync affect only that calendar account. Sync tokens
+are stored only in private SQLite, never provider URLs, logs or public Pages.
+All fixtures are synthetic. The stale university calendar subscription must
+not be used as a source of current course changes.

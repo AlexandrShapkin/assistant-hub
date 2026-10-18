@@ -196,3 +196,14 @@ before the same Store.import_calendar_week transaction used by manual imports.
 Provider I/O is outside the owner/API lock, while SQLite writes are serialized.
 This does not grant permission to crawl any university site and does not
 configure the user's actual timetable until a permitted feed/API is known.
+
+## Google Calendar offline sync boundary (Issue #46, initial stage)
+
+google_calendar_mirror.py converts already authorized, paginated Events API
+data into the private SQLite events table, supporting full baseline,
+nextSyncToken deltas, cancelled entries, recurring instances and full 410
+recovery. It has an injected transport instead of any actual OAuth client,
+auth secrets or direct Google HTTP requests. No automatic sync starts with
+the service, and no Google events are mutated. Independent user-approved
+OAuth, calendar allowlist, polling and opted-in lesson publication remain
+future stages.

@@ -309,6 +309,32 @@ and real export-format compatibility remain prerequisites for automatic
 refresh of that particular timetable. See
 [security boundaries](docs/security.md#opt-in-icalendar-subscription-issue-41).
 
+## Google Calendar offline read-only sync foundation (Issue #46)
+
+A new module, google_calendar_mirror.py, accepts already-authorized Google
+Calendar Events API page responses via a caller-supplied transport. It has
+NO independent Google OAuth grant, credentials or network requests; the
+normal localhost service does not invoke this component yet.
+
+The private Google event mirror stores full or incremental snapshots in local
+SQLite using stable per-calendar account hashes and opaque event identities.
+It updates changed events, handles recurring event instances and all-day
+events, removes cancelled entries, preserves other calendars and existing
+local workflow statuses, and persists Google's nextSyncToken only after an
+atomic successful transaction. Pagination is bounded (12 pages, at most
+1,500 events per sync), and a 410 invalid sync token can trigger a validated
+full-calendar replacement. Synthetic offline tests cover these behaviors.
+
+This milestone does not connect the user's account to the VPS. ChatGPT's
+Google Calendar connection is separately authorized and cannot be copied to
+Assistant Hub. The next implementation stage requires owner-approved,
+least-privilege OAuth2, an explicit calendar allowlist and scheduled reading.
+Adding university lessons to an owner-writable calendar is a separate,
+opt-in WRITE feature that requires an authoritative, permitted schedule
+source and a confirmed destination. The existing university subscription is
+known not to reflect weekly schedule revisions and is NOT a trusted source.
+See GitHub Issue #46 for the staged integration.
+
 ## GitHub App auth foundation (Issue #34)
 
 An isolated stdlib authentication module provides configured app/installation/
