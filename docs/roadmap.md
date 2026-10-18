@@ -14,6 +14,7 @@
 - [#5](https://github.com/AlexandrShapkin/assistant-hub/issues/5) — Telegram user-account read-only integration.
 - [#6](https://github.com/AlexandrShapkin/assistant-hub/issues/6) — VK API capability assessment.
 - [#7](https://github.com/AlexandrShapkin/assistant-hub/issues/7) — general site, RSS and API ingestion; remains OPEN until scheduling/backoff and general site APIs are completed.
+- [#46](https://github.com/AlexandrShapkin/assistant-hub/issues/46) — Google Calendar private read-only projection completed as offline foundation; independent OAuth and live sync/publishing pending.
 - [#41](https://github.com/AlexandrShapkin/assistant-hub/issues/41) — university timetable: manual local .ics import plus opt-in public .ics subscription foundation; a provider-permitted URL and live format verification remain unresolved.\n- [#36](https://github.com/AlexandrShapkin/assistant-hub/issues/36) — child of #7: bounded multi-feed catalog and explicit scheduled read-only polling; no general site APIs.
 - [#32](https://github.com/AlexandrShapkin/assistant-hub/issues/32) — child of #7: optional manually polled public HTTPS RSS2/Atom/JSON Feed snapshots; owner-authenticated localhost collection, bounded reads and conditional validators, no actions.
 - [#8](https://github.com/AlexandrShapkin/assistant-hub/issues/8) — parent GitHub adapter scope remains open for private GitHub App authentication and revocation.
