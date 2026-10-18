@@ -19,6 +19,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit
 from urllib.request import build_opener, HTTPRedirectHandler, HTTPSHandler, ProxyHandler, Request
 
 AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
+# Google still includes this older, official auth_uri in downloaded Desktop JSON.
+DESKTOP_JSON_AUTH_URIS = (AUTH_URI, "https://accounts.google.com/o/oauth2/auth")
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 SCOPES = (
     "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
@@ -124,7 +126,7 @@ def load_desktop_client(path):
     identifier = client.get("client_id")
     if not isinstance(identifier, str) or not CLIENT_RE.fullmatch(identifier):
         raise ValueError("invalid Google Desktop client ID")
-    if client.get("auth_uri") not in (None, AUTH_URI):
+    if client.get("auth_uri") not in (None, *DESKTOP_JSON_AUTH_URIS):
         raise ValueError("invalid Google auth endpoint")
     if client.get("token_uri") not in (None, TOKEN_URI):
         raise ValueError("invalid Google token endpoint")

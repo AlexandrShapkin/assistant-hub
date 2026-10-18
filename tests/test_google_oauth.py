@@ -71,6 +71,20 @@ class GoogleOAuthTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             authorization_url(CLIENT_ID, redirect, challenge, "short")
 
+    def test_google_downloaded_desktop_client_legacy_auth_uri(self):
+        # Google Cloud currently downloads /o/oauth2/auth even though
+        # our browser consent always uses canonical /o/oauth2/v2/auth.
+        downloaded = {"installed": {"client_id": CLIENT_ID,
+            "client_secret": FAKE_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "redirect_uris": ["http://localhost"]}}
+        self.client_file.write_text(json.dumps(downloaded))
+        self.assertEqual(load_desktop_client(self.client_file)["client_id"], CLIENT_ID)
+        self.assertTrue(authorization_url(CLIENT_ID,
+            "http://127.0.0.1:18771/oauth2callback", pkce_pair()[1], "a"*42)
+            .startswith(AUTH_URI + "?"))
+
     def test_bounded_client_file_permission_and_structure(self):
         self.assertEqual(self.client["client_id"], CLIENT_ID)
         with self.assertRaises(OSError):
