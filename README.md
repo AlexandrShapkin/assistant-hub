@@ -309,6 +309,22 @@ and real export-format compatibility remain prerequisites for automatic
 refresh of that particular timetable. See
 [security boundaries](docs/security.md#opt-in-icalendar-subscription-issue-41).
 
+## Owner-authorized Google Calendar read-only integration (Issue #46)
+
+Desktop OAuth PKCE enrollment and a one-shot Google Events API reader are
+implemented as **explicit local commands**, disabled unless invoked by the
+owner with private Google Cloud Desktop OAuth credentials. No OAuth grant
+exists on ru0 yet. No Google credentials are copied from the independently
+connected ChatGPT Google Calendar app.
+
+The owner can authorize read-only calendar-list and event scopes on the
+ThinkPad, protect the refresh grant under 0600 permissions, select calendars
+in a private allowlist, and then run a bounded one-time Google read into
+Hub SQLite on ru0. The owner-only UI will show mirrored calendars as
+noncollectable sources. **There is no background Google timer and there are
+no write API methods.** Real Google API interoperability still needs testing.
+See the full [Google Calendar setup](docs/google-calendar-setup.md).
+
 ## Google Calendar offline read-only sync foundation (Issue #46)
 
 A new module, google_calendar_mirror.py, accepts already-authorized Google

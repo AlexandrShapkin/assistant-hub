@@ -212,6 +212,12 @@ class Store:
                 raise ValueError("intent is not awaiting review")
             self._audit("review", key, encode({"outcome": outcome, "reviewer": reviewer}))
 
+    def local_google_accounts(self) -> list[str]:
+        """Owner-only local mirrors; never expose OAuth config or calendar IDs."""
+        return [row[0] for row in self.db.execute(
+            "SELECT DISTINCT account FROM events WHERE service='google-calendar' "
+            "ORDER BY account LIMIT 8")]
+
     def inbox(self) -> list[dict]:
         return [json.loads(row[0]) for row in self.db.execute(
             "SELECT data FROM events ORDER BY service, account, external_id")]

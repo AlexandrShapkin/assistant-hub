@@ -502,3 +502,21 @@ cancellations and full resync affect only that calendar account. Sync tokens
 are stored only in private SQLite, never provider URLs, logs or public Pages.
 All fixtures are synthetic. The stale university calendar subscription must
 not be used as a source of current course changes.
+
+## Google Desktop read-only OAuth and network boundary (#46)
+
+Owner consent is never started by the web server. A separate local command
+uses Desktop PKCE, loopback callback, strict Host and state verification,
+and fixed Google HTTPS token endpoints with verified TLS and no redirects or
+ambient proxy. Client JSON, refresh grants and allowlist must be 0600 regular
+files within owner-owned 0700 directories; token writes are atomic, reject
+symlinks and never persist the ephemeral access token.
+
+Only preselected calendar IDs may be fetched through fixed Google Calendar
+Events API GET endpoints, with OAuth bearer headers instead of URL tokens.
+The reader validates and bounds each paginated sync before it commits the
+private SQLite mirror, preserving independent calendar identities and
+existing local workflow statuses. The owner-only services API advertises
+mirrored Google accounts without manual collect capabilities. The entire
+Google reader is disabled by default; no actual Google authorization,
+Google account mutation or scheduled Google polling has been enabled.
