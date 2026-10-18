@@ -115,6 +115,25 @@ class LocalServerTests(unittest.TestCase):
                                                     "account": account})[0], 400)
         self.assertNotIn(identity, json.dumps(records))
 
+    def test_private_gmail_metadata_mirror_is_visible_but_not_collectable(self):
+        from assistant_hub.gmail_metadata import sync_gmail, account_for
+        from tests.test_gmail_metadata import FakeInbox, EMAIL_A
+        with contextlib.closing(Store(self.db)) as store:
+            account, counts = sync_gmail(store, FakeInbox(EMAIL_A), EMAIL_A)
+        self.assertEqual(counts["added"], 2)
+        self.assertEqual(self.request("/api/services", origin=False)[0], 401)
+        self.assertEqual(self.request("/api/inbox", origin=False)[0], 401)
+        self.login()
+        self.assertEqual(account, account_for(EMAIL_A))
+        entries = self.request("/api/services")[1]
+        self.assertIn({"service": "gmail", "account": account,
+                       "capabilities": [], "synthetic": False}, entries)
+        inbox = self.request("/api/inbox")[1]
+        self.assertEqual(len(inbox), 2)
+        self.assertTrue(all(e["service_id"] == "gmail" and not e["body"] for e in inbox))
+        self.assertNotIn(EMAIL_A, json.dumps(inbox))
+        self.assertEqual(self.collect("gmail", account)[0], 400)
+
     def test_calendar_manual_import_authenticated_atomic_and_local_only(self):
         from tests.test_calendar_import import calendar, event
         from assistant_hub.calendar_import import SERVICE, ACCOUNT

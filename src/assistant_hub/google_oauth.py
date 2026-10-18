@@ -26,6 +26,15 @@ SCOPES = (
     "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
     "https://www.googleapis.com/auth/calendar.events.readonly",
 )
+GMAIL_SCOPES = ("https://www.googleapis.com/auth/gmail.metadata",)
+
+
+def _validated_scopes(value):
+    if value not in (SCOPES, GMAIL_SCOPES):
+        raise ValueError("unsupported Google read-only consent scopes")
+    return value
+
+
 CLIENT_RE = re.compile(r"[A-Za-z0-9._-]{10,200}\.apps\.googleusercontent\.com")
 MAX_RESPONSE = 16_384
 
@@ -144,7 +153,8 @@ def pkce_pair():
     return verifier, challenge
 
 
-def authorization_url(client_id, redirect_uri, challenge, state):
+def authorization_url(client_id, redirect_uri, challenge, state, *, scopes=SCOPES):
+    _validated_scopes(scopes)
     if not isinstance(client_id, str) or not CLIENT_RE.fullmatch(client_id):
         raise ValueError("invalid Google client")
     uri = urlsplit(redirect_uri)
@@ -159,7 +169,7 @@ def authorization_url(client_id, redirect_uri, challenge, state):
         raise ValueError("invalid OAuth state")
     parameters = {
         "client_id": client_id, "redirect_uri": redirect_uri,
-        "response_type": "code", "scope": " ".join(SCOPES),
+        "response_type": "code", "scope": " ".join(scopes),
         "access_type": "offline", "prompt": "consent",
         "state": state, "code_challenge": challenge,
         "code_challenge_method": "S256",
@@ -195,14 +205,15 @@ def post_token(form):
     return _parse_json(raw)
 
 
-def authorized_tokens(response, client_id):
+def authorized_tokens(response, client_id, *, scopes=SCOPES):
     """Persist only refresh grant; never an access token or auth code."""
+    _validated_scopes(scopes)
     if (not isinstance(response, dict) or
             not isinstance(response.get("token_type"), str) or
             response["token_type"].lower() != "bearer"):
         raise ValueError("OAuth bearer token required")
-    scopes = response.get("scope")
-    if not isinstance(scopes, str) or set(scopes.split()) != set(SCOPES):
+    granted_scopes = response.get("scope")
+    if not isinstance(granted_scopes, str) or set(granted_scopes.split()) != set(scopes):
         raise ValueError("Google did not grant exactly the requested read-only scopes")
     refresh = response.get("refresh_token")
     access = response.get("access_token")
@@ -210,12 +221,13 @@ def authorized_tokens(response, client_id):
             not isinstance(access, str) or not 8 <= len(access) <= 4096):
         raise ValueError("refresh and access tokens required")
     return {"version": 1, "client_id": client_id,
-            "refresh_token": refresh, "scopes": list(SCOPES)}
+            "refresh_token": refresh, "scopes": list(scopes)}
 
 
 def authorize_with_browser(client, token_path, *, timeout=300, announce=print,
-                           exchange=post_token):
+                           exchange=post_token, scopes=SCOPES):
     """Run only on the owner's interactive desktop; never inside public Hub."""
+    _validated_scopes(scopes)
     if type(timeout) is not int or not 30 <= timeout <= 600:
         raise ValueError("invalid consent timeout")
     # Refuse consent before any browser interaction if token target is unsafe.
@@ -277,7 +289,7 @@ def authorize_with_browser(client, token_path, *, timeout=300, announce=print,
 
     with HTTPServer(("127.0.0.1", 0), Callback) as http:
         redirect = "http://127.0.0.1:" + str(http.server_port) + "/oauth2callback"
-        url = authorization_url(client["client_id"], redirect, challenge, state)
+        url = authorization_url(client["client_id"], redirect, challenge, state, scopes=scopes)
         announce("Open in the same computer's browser: " + url)
         stop = time.monotonic() + timeout
         http.timeout = 1
@@ -291,26 +303,28 @@ def authorize_with_browser(client, token_path, *, timeout=300, announce=print,
     if client.get("client_secret"):
         form["client_secret"] = client["client_secret"]
     response = exchange(form)
-    vault = authorized_tokens(response, client["client_id"])
+    vault = authorized_tokens(response, client["client_id"], scopes=scopes)
     write_private(token_path, json.dumps(vault, sort_keys=True).encode("utf-8"))
     return True
 
 
-def load_refresh_grant(path, expected_client_id):
+def load_refresh_grant(path, expected_client_id, *, scopes=SCOPES):
+    _validated_scopes(scopes)
     value = _parse_json(read_private(path))
     if (set(value) != {"version", "client_id", "refresh_token", "scopes"}
             or value["version"] != 1
             or value["client_id"] != expected_client_id
-            or value["scopes"] != list(SCOPES)
+            or value["scopes"] != list(scopes)
             or not isinstance(value["refresh_token"], str)
             or not 8 <= len(value["refresh_token"]) <= 4096):
         raise ValueError("invalid private read-only OAuth grant")
     return value
 
 
-def refresh_access_token(client, token_path, *, exchange=post_token):
+def refresh_access_token(client, token_path, *, exchange=post_token, scopes=SCOPES):
     """A Google API caller gets ephemeral access token; files retain refresh only."""
-    grant = load_refresh_grant(token_path, client["client_id"])
+    _validated_scopes(scopes)
+    grant = load_refresh_grant(token_path, client["client_id"], scopes=scopes)
     form = {"grant_type": "refresh_token", "client_id": client["client_id"],
             "refresh_token": grant["refresh_token"]}
     if client.get("client_secret"):
@@ -322,7 +336,7 @@ def refresh_access_token(client, token_path, *, exchange=post_token):
     if not isinstance(value, str) or not 8 <= len(value) <= 4096:
         raise ValueError("invalid Google access token")
     if "scope" in result and (
-        not isinstance(result["scope"], str) or set(result["scope"].split()) != set(SCOPES)
+        not isinstance(result["scope"], str) or set(result["scope"].split()) != set(scopes)
     ):
         raise ValueError("Google refresh scopes changed")
     if "refresh_token" in result:

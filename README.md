@@ -351,6 +351,20 @@ source and a confirmed destination. The existing university subscription is
 known not to reflect weekly schedule revisions and is NOT a trusted source.
 See GitHub Issue #46 for the staged integration.
 
+## Owner-invoked Gmail metadata read-only foundation (Issue #4)
+
+Assistant Hub now has an opt-in Gmail metadata-only reader for up to two
+independently authorized accounts. It uses separate Desktop OAuth grants with
+the `gmail.metadata` scope, stable account isolation, bounded inbox baselines,
+Gmail `historyId` incremental changes and atomic private SQLite updates.
+Subjects, From headers and unread flags are mirrored; **no message bodies,
+attachments, snippets or outgoing content are retrieved or persisted**.
+The authenticated localhost inbox shows read-only mirrored items, but its
+`/api/collect` endpoint cannot start Gmail access. No Gmail account is
+authorized, no Gmail timer is enabled, and no Gmail mutations exist at this
+milestone. Real owner consent, privacy/retention review and live integration
+validation remain prerequisites. See [private Gmail setup](docs/gmail-setup.md).
+
 ## GitHub App auth foundation (Issue #34)
 
 An isolated stdlib authentication module provides configured app/installation/

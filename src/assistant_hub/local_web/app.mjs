@@ -87,7 +87,11 @@ function details() {
     target.append(element('p', tr('selectPrompt')));
     return;
   }
-  target.append(element('h3', event.title), element('p', `${event.service_id} / ${event.account_id} / ${event.external_id}`), element('p', formatDate(event.timestamp, locale)), element('pre', event.body));
+  target.append(element('h3', event.title), element('p', `${event.service_id} / ${event.account_id} / ${event.external_id}`), element('p', formatDate(event.timestamp, locale)));
+  if (event.service_id === 'gmail' && event.attributes?.from) {
+    target.append(element('p', event.attributes.from));
+  }
+  target.append(element('pre', event.body));
   const label = element('label', tr('detailStatus'));
   label.htmlFor = 'item-status';
   const select = element('select', '');
@@ -222,7 +226,7 @@ function render() {
     (!$('service').value || e.service_id === $('service').value) &&
     (!$('account').value || e.account_id === $('account').value) &&
     (!$('status-filter').value || e.status === $('status-filter').value) &&
-    [e.title, e.body, e.service_id, e.account_id, e.external_id].join(' ').toLowerCase().includes(query));
+    [e.title, e.body, e.attributes?.from ?? '', e.service_id, e.account_id, e.external_id].join(' ').toLowerCase().includes(query));
   $('count').textContent = tr('itemCount', {count: visible.length});
   $('items').replaceChildren();
   for (const event of visible) {
