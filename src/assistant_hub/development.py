@@ -70,6 +70,8 @@ class DevelopmentLedger:
                 not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._/-]{0,127}", obj["branch"])):
             raise ValueError("invalid report")
         with self.db:
+            # Serialize validation with writes; sqlite3 defers BEGIN otherwise.
+            self.db.execute("BEGIN IMMEDIATE")
             if self._replay(obj, "report"):
                 return {"accepted": True, "replayed": True}
             row = self.db.execute("SELECT data, sequence FROM development_tasks WHERE task_id=?",
@@ -95,6 +97,8 @@ class DevelopmentLedger:
         if obj["action"] not in {"pause", "resume"}:
             raise ValueError("unsupported request")
         with self.db:
+            # Serialize replay detection with insertion of the unique message ID.
+            self.db.execute("BEGIN IMMEDIATE")
             if self._replay(obj, "control_request"):
                 return {"delivery": "pending", "replayed": True}
             row = self.db.execute("SELECT data FROM development_tasks WHERE task_id=?",
