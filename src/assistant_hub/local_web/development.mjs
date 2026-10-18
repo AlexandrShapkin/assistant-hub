@@ -36,3 +36,24 @@ export function renderDevelopment(target, snapshot, requestControl, documentRef 
     target.append(node('p', `${new Date(event.received_at * 1000).toISOString()} · ${data.task_id} · ${detail}`));
   }
 }
+
+// Retain an idempotency key across uncertain network delivery. Never dispatch commands.
+export function createControlRequestSender(send, nextId = () => globalThis.crypto.randomUUID()) {
+  if (typeof send !== 'function' || typeof nextId !== 'function') throw new TypeError('callbacks required');
+  const pending = new Map();
+  return {
+    async request(taskId, action) {
+      const key = JSON.stringify([taskId, action]);
+      let messageId = pending.get(key);
+      if (!messageId) {
+        messageId = nextId();
+        pending.set(key, messageId);
+      }
+      // A failed request may have committed server-side. Preserve its ID for retry.
+      const result = await send({message_id: messageId, task_id: taskId, action});
+      if (pending.get(key) === messageId) pending.delete(key);
+      return result;
+    },
+    clear() { pending.clear(); }, // Called on logout; never carry IDs to a new session.
+  };
+}
