@@ -1,6 +1,4 @@
 """Offline, durable assignment ledger. No executor transport or dispatch."""
-import json
-import sqlite3
 from uuid import UUID
 
 
@@ -20,6 +18,7 @@ class AssignmentLedger:
                         'pending', 'accepted', 'running', 'completed', 'failed',
                         'cancel_requested', 'cancelled', 'needs_reconciliation')),
                     last_sequence INTEGER NOT NULL DEFAULT 0,
+                    lease_deadline INTEGER,
                     UNIQUE(executor_id, idempotency_key));
                 CREATE TABLE IF NOT EXISTS executor_events (
                     message_id TEXT PRIMARY KEY,
@@ -27,6 +26,10 @@ class AssignmentLedger:
                     sequence INTEGER NOT NULL CHECK(sequence > 0),
                     kind TEXT NOT NULL,
                     UNIQUE(task_id, sequence));
+                CREATE TABLE IF NOT EXISTS executor_outbox (
+                    task_id TEXT PRIMARY KEY REFERENCES executor_assignments(task_id),
+                    command TEXT NOT NULL CHECK(command = 'assign'),
+                    delivered INTEGER NOT NULL DEFAULT 0 CHECK(delivered IN (0,1)));
             """)
 
     def assign(self, task_id, executor_id, generation, idempotency_key):
@@ -49,6 +52,9 @@ class AssignmentLedger:
                 "INSERT INTO executor_assignments "
                 "(task_id, executor_id, generation, idempotency_key, state) "
                 "VALUES (?, ?, ?, ?, 'pending')", expected)
+            self.db.execute(
+                "INSERT INTO executor_outbox(task_id, command) VALUES (?, 'assign')",
+                (task_id,))
             return True
 
     def record_event(self, task_id, message_id, sequence, generation, kind):
@@ -100,3 +106,50 @@ class AssignmentLedger:
             "SELECT task_id, executor_id, generation, state, last_sequence "
             "FROM executor_assignments WHERE task_id=?", (task_id,)).fetchone()
         return dict(row) if row else None
+
+    def pending_commands(self):
+        """Read pending durable commands; caller must deliver at least once."""
+        return [dict(row) for row in self.db.execute(
+            "SELECT o.task_id, o.command, a.executor_id, a.generation, "
+            "a.idempotency_key FROM executor_outbox o "
+            "JOIN executor_assignments a ON a.task_id=o.task_id "
+            "WHERE o.delivered=0 AND a.state='pending' ORDER BY o.rowid")]
+
+    def mark_delivered(self, task_id):
+        """Transport acknowledgement is not executor acceptance."""
+        with self.db:
+            return bool(self.db.execute(
+                "UPDATE executor_outbox SET delivered=1 "
+                "WHERE task_id=? AND delivered=0", (task_id,)).rowcount)
+
+    def lease(self, task_id, generation, deadline, now):
+        """Set a bounded deadline; never automatically reassign expired work."""
+        if (type(generation) is not int or generation < 1 or
+                type(deadline) is not int or type(now) is not int or
+                deadline <= now):
+            raise ValueError("invalid lease")
+        with self.db:
+            row = self.db.execute(
+                "SELECT generation, state FROM executor_assignments WHERE task_id=?",
+                (task_id,)).fetchone()
+            if not row or row["generation"] != generation or row["state"] not in (
+                    "pending", "accepted", "running"):
+                raise ValueError("lease not eligible")
+            self.db.execute(
+                "UPDATE executor_assignments SET lease_deadline=? WHERE task_id=?",
+                (deadline, task_id))
+
+    def reconcile_expired(self, now):
+        """Mark expired nonterminal tasks for explicit status reconciliation."""
+        if type(now) is not int:
+            raise ValueError("invalid timestamp")
+        with self.db:
+            rows = self.db.execute(
+                "SELECT task_id FROM executor_assignments "
+                "WHERE lease_deadline IS NOT NULL AND lease_deadline<=? "
+                "AND state IN ('pending','accepted','running')", (now,)).fetchall()
+            self.db.execute(
+                "UPDATE executor_assignments SET state='needs_reconciliation' "
+                "WHERE lease_deadline IS NOT NULL AND lease_deadline<=? "
+                "AND state IN ('pending','accepted','running')", (now,))
+            return [row["task_id"] for row in rows]
