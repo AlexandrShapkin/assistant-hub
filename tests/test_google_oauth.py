@@ -194,9 +194,14 @@ class GoogleOAuthTests(unittest.TestCase):
                 e.close()
                 return e.code
         self.assertEqual(callback({'state': 'wrong', 'code': 'synthetic-code'}), 400)
+        self.assertEqual(callback({'state': state, 'iss': 'https://attacker.example',
+                                   'code': 'synthetic-code'}), 400)
+        self.assertEqual(callback({'state': state, 'iss': 'https://accounts.google.com',
+                                   'code': 'synthetic-code', 'unexpected': 'value'}), 400)
         self.assertEqual(callback({'state': state, 'code': 'synthetic-code'},
                                   host='attacker.example'), 403)
-        self.assertEqual(callback({'state': state, 'code': 'synthetic-code'}), 200)
+        self.assertEqual(callback({'state': state, 'iss': 'https://accounts.google.com',
+                                   'code': 'synthetic-code'}), 200)
         thread.join(5)
         self.assertFalse(thread.is_alive())
         self.assertEqual(outcome, [True])
