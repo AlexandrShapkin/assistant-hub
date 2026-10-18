@@ -7,6 +7,7 @@ let selected = null;
 let locale = DEFAULT_LOCALE;
 let noticeState = null;
 let calendarWeeks = [];
+let calendarChanges = [];
 let selectedWeek = null;
 const $ = id => document.getElementById(id);
 const tr = (key, params) => t(locale, key, params);
@@ -24,9 +25,11 @@ function loggedOut() {
   services = [];
   selected = null;
   calendarWeeks = [];
+  calendarChanges = [];
   selectedWeek = null;
   $('calendar-file').value = '';
   $('calendar-days').replaceChildren();
+  $('calendar-changes').replaceChildren();
   $('items').replaceChildren();
   $('details').replaceChildren();
   $('workspace').hidden = true;
@@ -100,6 +103,34 @@ function details() {
   target.append(label, select, save);
 }
 const calendarRecords = () => events.filter(e => e.service_id === 'local-calendar' && e.account_id === 'weekly-ics');
+function calendarChangeSummary(lesson) {
+  if (!lesson) return '';
+  return [lesson.date, lesson.time, lesson.title, lesson.location].filter(Boolean).join(' · ');
+}
+function calendarChangeRender() {
+  const container = $('calendar-changes');
+  container.replaceChildren();
+  const changes = calendarChanges.filter(c => c.week === selectedWeek).slice(0, 20);
+  if (!changes.length) {
+    container.append(element('p', tr('calendarChangesNone')));
+    return;
+  }
+  for (const change of changes) {
+    const panel = element('div', '');
+    panel.className = 'calendar-change';
+    panel.append(element('strong', tr('calendar.change.' + change.kind)));
+    const previous = calendarChangeSummary(change.before);
+    const next = calendarChangeSummary(change.after);
+    if (previous) panel.append(element('p', previous));
+    if (previous && next) panel.append(element('small', '↓'));
+    if (next) panel.append(element('p', next));
+    if (previous && next && previous === next && change.before.body !== change.after.body) {
+      panel.append(element('small', tr('calendarDescriptionChanged')));
+    }
+    panel.append(element('small', change.recorded_at + ' UTC'));
+    container.append(panel);
+  }
+}
 function calendarRender() {
   const weeks = $('calendar-week');
   weeks.replaceChildren();
@@ -117,6 +148,7 @@ function calendarRender() {
   const entry = calendarWeeks.find(w => w.week === selectedWeek);
   if (!entry) {
     $('calendar-updated').textContent = tr('calendarNone');
+    calendarChangeRender();
     return;
   }
   const imported = entry.imported_at ? entry.imported_at + ' UTC' : '';
@@ -144,9 +176,13 @@ function calendarRender() {
     }
     place.append(box);
   }
+  calendarChangeRender();
 }
 async function calendarRefresh() {
-  calendarWeeks = await api('/api/calendar/weeks');
+  const [weeks, changes] = await Promise.all([
+    api('/api/calendar/weeks'), api('/api/calendar/changes')]);
+  calendarWeeks = weeks;
+  calendarChanges = changes;
   calendarRender();
 }
 
@@ -208,6 +244,11 @@ $('collect').addEventListener('click', () => run($('collect'), async () => {
   }
   await refresh();
   notice('collected');
+}));
+$('calendar-refresh').addEventListener('click', () => run($('calendar-refresh'), async () => {
+  await refresh();
+  await calendarRefresh();
+  notice('calendarRefreshed');
 }));
 $('calendar-week').addEventListener('change', () => {
   selectedWeek = $('calendar-week').value;

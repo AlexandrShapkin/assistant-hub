@@ -16,3 +16,9 @@
 .calendar-lesson strong{display:block}
 .calendar-lesson small{display:block;color:#53675e}
 .calendar-updated{color:#52675e;font-size:.85rem}
+
+.calendar-changes{display:grid;gap:.5rem}
+.calendar-change{border-left:3px solid #74917e;padding:.5rem .85rem;background:#f8faf7;border-radius:.3rem}
+.calendar-change strong{display:block}
+.calendar-change small{display:block;color:#53675e}
+.calendar-change p{margin:.2rem 0;overflow-wrap:anywhere}
