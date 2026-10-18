@@ -253,7 +253,8 @@ def authorize_with_browser(client, token_path, *, timeout=300, announce=print,
                 pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
                                   max_num_fields=5)
                 query = _unique(pairs)
-                if (set(query) - {"state", "code", "scope"} or
+                if (set(query) - {"state", "code", "scope", "iss"} or
+                        ("iss" in query and query["iss"] != "https://accounts.google.com") or
                         query.get("state") != state or
                         not isinstance(query.get("code"), str) or
                         not re.fullmatch(r"[A-Za-z0-9_./~-]{1,2048}", query["code"])):
