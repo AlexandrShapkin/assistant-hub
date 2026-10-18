@@ -439,6 +439,15 @@ expand recurrence or VALARM payloads. It rejects unsupported forms rather than
 silently fabricating classes, and renders provider text via `textContent`.
 Events are considered private user-provided data (unlike public RSS and GitHub).
 
+Timetable changes are private and visible only through the existing bearer
+session at GET /api/calendar/changes. Comparison stores small snapshots of
+lesson title, time, location and description from before and after an update
+in a bounded 500-row private SQLite table. Initial imports produce no change
+alerts; subsequent updates, additions and removals share the week import
+transaction. Source/provenance-only changes do not generate false alerts.
+The browser renders all change details with textContent and does not poll
+the university or other external services when showing/refreshing changes.
+
 Every import is a single SQLite transaction, with stable per-week UID hashes,
 audit counts, and replacement/removal limited to the specified week. Deleting
 an absent class may remove its local status; prior weeks are preserved. Last

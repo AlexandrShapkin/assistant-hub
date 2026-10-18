@@ -168,7 +168,12 @@ Host/Origin, upload size and all events before touching SQLite. One-week
 replacement is transactional in `Store.import_calendar_week`, leaving other
 weeks and provider cursors unchanged. It reuses the existing inbox and
 workflow-status storage, with a separate `calendar_weeks` table for manual
-import freshness. The local UI presents seven weekday groups.
+import freshness. The same transaction records before/after timetable changes
+in a private calendar_changes table, retaining the last 500 changes;
+initial weekly imports create no alerts and source-provenance-only changes do
+not appear as timetable changes. GET /api/calendar/changes requires owner
+authentication. The local UI presents seven weekday groups and a per-week
+change history, with an explicit local-only Refresh saved data action.
 
 This input is an **import**, not an adapter polling a remote provider.
 The local-calendar identity has no `read` registry binding or scheduled

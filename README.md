@@ -234,6 +234,15 @@ empty calendars, over 80 events or over 96 KiB. Real upstream export formats
 are **not yet verified**; a site-provided file can reveal needed compatibility
 work, and unsupported files must fail closed.
 
+The local timetable also has a **change history** for each imported week.
+The first import establishes a baseline without change alerts. Later imports
+record added, updated, and removed lessons with before/after subject, time,
+and room; identical snapshots create no duplicate change entries. The most
+recent 500 changes are retained in the private SQLite database. In the
+authenticated UI, select a week to see up to 20 recent changes and use
+**Refresh saved data** to read updates committed by any opt-in background
+calendar worker (no university request from the browser).
+
 The import replaces only **one selected week** in an atomic SQLite
 transaction. Repeating an unchanged file does not add duplicates. Changed
 lessons update in place using stable UID-based identities, preserving workflow

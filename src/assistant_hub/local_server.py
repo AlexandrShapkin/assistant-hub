@@ -242,7 +242,8 @@ class Handler(BaseHTTPRequestHandler):
                          "no private accounts or outgoing actions").encode())
                 self.reply(200, data, content_type)
                 return
-        routes = {"GET": {"/api/inbox", "/api/services", "/api/session", "/api/calendar/weeks"},
+        routes = { "GET": {"/api/inbox", "/api/services", "/api/session",
+                         "/api/calendar/weeks", "/api/calendar/changes"},
                   "POST": {"/api/login", "/api/collect", "/api/status", "/api/logout",
                            "/api/calendar/import"}}
         if self.path not in routes.get(self.command, set()):
@@ -282,6 +283,8 @@ class Handler(BaseHTTPRequestHandler):
                     self.reply(200, store.inbox_with_status())
                 elif self.path == "/api/calendar/weeks":
                     self.reply(200, store.calendar_weeks())
+                elif self.path == "/api/calendar/changes":
+                    self.reply(200, store.calendar_changes())
                 elif self.path == "/api/calendar/import":
                     obj = self.body(h, ("ical",), 128 * 1024, MAX_ICAL_BYTES)
                     week, lessons = parse_ical(obj["ical"])

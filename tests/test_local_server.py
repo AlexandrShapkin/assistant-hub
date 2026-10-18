@@ -101,11 +101,13 @@ class LocalServerTests(unittest.TestCase):
         from assistant_hub.calendar_import import SERVICE, ACCOUNT
         raw = calendar(event("synthetic-uid"))
         self.assertEqual(self.request("/api/calendar/weeks")[0], 401)
+        self.assertEqual(self.request("/api/calendar/changes", origin=False)[0], 401)
         self.assertEqual(self.request("/api/calendar/import", {"ical": raw})[0], 401)
         self.login()
         self.assertEqual(self.request("/api/calendar/import", {"ical": raw}, origin=False)[0], 403)
         self.assertEqual(self.request("/api/calendar/import", method="GET")[0], 404)
         self.assertEqual(self.request("/api/calendar/weeks")[1], [])
+        self.assertEqual(self.request("/api/calendar/changes")[1], [])
         self.assertEqual(self.collect(SERVICE, ACCOUNT)[0], 400)  # never fetches outside data
         code, result = self.request("/api/calendar/import", {"ical": raw})
         self.assertEqual((code, result["week"], result["count"], result["added"]),
@@ -118,12 +120,19 @@ class LocalServerTests(unittest.TestCase):
         self.assertEqual(inbox[0]["status"], "new")
         self.assertEqual(self.request("/api/calendar/import", {"ical": raw})[1]["added"], 0)
         self.assertEqual(self.request("/api/calendar/import", {"ical": raw})[1]["changed"], 0)
+        self.assertEqual(self.request("/api/calendar/changes")[1], [])
         self.assertEqual(self.status("done", SERVICE, ACCOUNT, inbox[0]["external_id"])[0], 200)
         newer = calendar(event("synthetic-uid", title="Updated class"))
         self.assertEqual(self.request("/api/calendar/import", {"ical": newer})[1]["changed"], 1)
         edited = self.request("/api/inbox")[1]
         self.assertEqual(edited[0]["title"], "Updated class")
         self.assertEqual(edited[0]["status"], "done")
+        history = self.request("/api/calendar/changes", origin=False)[1]
+        self.assertEqual(len(history), 1)
+        self.assertEqual((history[0]["kind"], history[0]["week"]), ("updated", "2026-10-12"))
+        self.assertEqual(history[0]["before"]["title"], "Synthetic lecture")
+        self.assertEqual(history[0]["after"]["title"], "Updated class")
+        self.assertEqual(self.request("/api/calendar/changes", origin="https://foreign.example")[0], 403)
 
     def test_calendar_rejects_oversize_recurring_or_wrong_shape_without_writes(self):
         from tests.test_calendar_import import calendar, event
@@ -156,7 +165,7 @@ class LocalServerTests(unittest.TestCase):
         self.assertEqual(self.request("/api/login", {"password": SYNTHETIC_PASSWORD})[0], 401)
 
     def test_gets_without_auth(self):
-        for path in ("/api/inbox", "/api/services", "/api/session"):
+        for path in ("/api/inbox", "/api/services", "/api/session", "/api/calendar/changes"):
             self.assertEqual(self.request(path, origin=False)[0], 401)
 
     def test_get_without_origin_with_token(self):
