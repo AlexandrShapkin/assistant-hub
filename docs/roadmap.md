@@ -10,7 +10,7 @@
 
 ## M1 — Connectors
 
-- [#4](https://github.com/AlexandrShapkin/assistant-hub/issues/4) — Gmail read-only synchronization.
+- [#4](https://github.com/AlexandrShapkin/assistant-hub/issues/4) — Gmail metadata-only reader, private two-account OAuth flow and bounded inbox/history mirror implemented and tested synthetically; live consent, retention policy, account setup and unattended scheduling remain pending.
 - [#5](https://github.com/AlexandrShapkin/assistant-hub/issues/5) — Telegram user-account read-only integration.
 - [#6](https://github.com/AlexandrShapkin/assistant-hub/issues/6) — VK API capability assessment.
 - [#7](https://github.com/AlexandrShapkin/assistant-hub/issues/7) — general site, RSS and API ingestion; remains OPEN until scheduling/backoff and general site APIs are completed.

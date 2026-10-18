@@ -277,6 +277,9 @@ class Handler(BaseHTTPRequestHandler):
                 for account in store.local_google_accounts():
                     bindings.append({"service": "google-calendar", "account": account,
                                      "capabilities": [], "synthetic": False})
+                for account in store.local_gmail_accounts():
+                    bindings.append({"service": "gmail", "account": account,
+                                     "capabilities": [], "synthetic": False})
             finally:
                 store.close()
             self.reply(200, bindings)

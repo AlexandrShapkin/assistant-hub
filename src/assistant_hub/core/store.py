@@ -218,6 +218,12 @@ class Store:
             "SELECT DISTINCT account FROM events WHERE service='google-calendar' "
             "ORDER BY account LIMIT 8")]
 
+    def local_gmail_accounts(self) -> list[str]:
+        """Expose only opaque account hashes from privately mirrored Gmail metadata."""
+        return [row[0] for row in self.db.execute(
+            "SELECT DISTINCT account FROM events WHERE service='gmail' "
+            "ORDER BY account LIMIT 2")]
+
     def inbox(self) -> list[dict]:
         return [json.loads(row[0]) for row in self.db.execute(
             "SELECT data FROM events ORDER BY service, account, external_id")]

@@ -41,6 +41,27 @@ sensitive fact. Review staged diffs manually. Never add real credentials,
 sessions, personal messages, subscription links, or deployment access details.
 
 
+## Gmail metadata-only boundary (Issue #4)
+
+The optional `gmail_cli` module is not a default local-server provider.
+It requires independently authorized read-only `gmail.metadata` grants for up
+to two explicit Gmail identities. Existing Calendar OAuth grants cannot be
+used as Gmail grants or vice versa. The Gmail reader has only fixed Google
+GET endpoints, no proxy/redirect support, and the `/api/collect` endpoint
+does not expose it. Provider metadata is validated before atomic SQLite
+changes or cursor advancement; distinct account identities are hashed.
+The authenticated owner-only inbox may display sender and subject, which
+remain sensitive personal data. No message body, snippet, attachment or
+outgoing email content is read or stored. A limited initial snapshot and
+expired-history rebaseline are *not* complete mailbox archives.
+
+Metadata stored in SQLite is **not encrypted at rest**, and current
+private-file permissions are not a credential vault. Two-account setup,
+privacy/retention review and a separate live Google OAuth validation are
+required before any routine personal email ingestion or service timer.
+Read-only Gmail OAuth cannot grant permission to send, alter labels, mark as
+read, delete, archive or draft messages. See [Gmail setup](gmail-setup.md).
+
 ## First request boundary (Issue #2)
 
 Scope: stdlib-only `SessionManager` and composable `RequestGuard`, exercised
