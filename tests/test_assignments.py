@@ -163,3 +163,47 @@ class CancellationAndRecoveryTests(unittest.TestCase):
         self.assertTrue(self.ledger.record_event("task", message_id, 1, 1, "accepted"))
         with self.assertRaises(ValueError):
             self.ledger.record_event("task", message_id, 1, 2, "accepted")
+
+
+class RaceAndSafetyTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.store = Store(Path(self.tmp.name) / "hub.db")
+        self.ledger = AssignmentLedger(self.store)
+        self.ledger.assign("task", "worker", 1, "key")
+
+    def tearDown(self):
+        self.store.close()
+        self.tmp.cleanup()
+
+    def event(self, seq, kind):
+        return self.ledger.record_event("task", str(uuid4()), seq, 1, kind)
+
+    def test_completion_after_cancel_request_wins(self):
+        self.event(1, "accepted")
+        self.event(2, "started")
+        self.ledger.request_cancel("task", 1)
+        self.event(3, "completed")
+        self.assertEqual(self.ledger.status("task")["state"], "completed")
+        with self.assertRaises(ValueError):
+            self.event(4, "cancelled")
+
+    def test_failure_after_cancel_request_is_preserved(self):
+        self.event(1, "accepted")
+        self.event(2, "started")
+        self.ledger.request_cancel("task", 1)
+        self.event(3, "failed")
+        self.assertEqual(self.ledger.status("task")["state"], "failed")
+
+    def test_cancel_before_dispatch_drops_unsent_assign(self):
+        self.assertEqual(len(self.ledger.pending_commands()), 1)
+        self.ledger.request_cancel("task", 1)
+        self.assertEqual(self.ledger.pending_commands(), [])
+        self.assertFalse(self.ledger.mark_delivered("task"))
+
+    def test_unknown_status_does_not_requeue(self):
+        self.ledger.lease("task", 1, 20, 10)
+        self.ledger.reconcile_expired(20)
+        self.assertFalse(self.ledger.reconcile_status("task", 1, "not_found"))
+        self.assertEqual(self.ledger.pending_commands(), [])
+        self.assertEqual(self.ledger.status("task")["state"], "needs_reconciliation")

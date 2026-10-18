@@ -91,7 +91,9 @@ class AssignmentLedger:
             if sequence <= row["last_sequence"]:
                 raise ValueError("out-of-order event")
             required, new_state = transitions[kind]
-            if kind == 'cancelled' and row['state'] == 'cancel_requested':
+            # Completion can race with a locally requested cancellation.
+            # The executor's terminal result is authoritative.
+            if kind in ('completed', 'failed') and row['state'] == 'cancel_requested':
                 pass
             elif row["state"] != required:
                 raise ValueError("invalid state transition")
@@ -173,6 +175,10 @@ class AssignmentLedger:
             self.db.execute(
                 "UPDATE executor_assignments SET state='cancel_requested' "
                 "WHERE task_id=?", (task_id,))
+            # A not-yet-sent assignment must not be dispatched after cancellation.
+            self.db.execute(
+                "UPDATE executor_outbox SET delivered=1 WHERE task_id=? "
+                "AND delivered=0", (task_id,))
             return True
 
     def reconcile_status(self, task_id, generation, executor_state):
