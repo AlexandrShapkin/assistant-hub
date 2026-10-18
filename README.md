@@ -218,6 +218,17 @@ and GitHub Pages stay synthetic-only. See
 ## Manual weekly iCalendar import (Issue #41)
 
 The authenticated localhost workspace has a separate **Classes by week** section.
+On login, it automatically selects the week beginning Monday in the
+`Asia/Barnaul` timezone if available; otherwise the nearest upcoming
+imported week, then the most recent past week. The status above the calendar
+explicitly warns when **the current week is missing**, or when its last
+recorded import was **48 hours ago or earlier**. A recently imported
+snapshot is not a guarantee that the university has not changed classes.
+The local-only overview shows up to three future lessons found in the next
+14 days of imported calendar data, across week boundaries. A blank upcoming
+list means **no matching imported events**, not that the university has
+cancelled classes. Refresh saved data reads only local SQLite; it does not
+request external websites or schedule a poll.
 In a browser on the owner's ThinkPad, export the selected week as an `.ics`
 file from the timetable website, open `http://localhost:18770/` through the
 existing SSH tunnel, sign in and select the exported file. Import is

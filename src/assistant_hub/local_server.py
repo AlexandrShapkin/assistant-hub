@@ -32,6 +32,7 @@ ASSETS = {"/": ("index.html", "text/html; charset=utf-8"),
           "/index.html": ("index.html", "text/html; charset=utf-8"),
           "/app.mjs": ("app.mjs", "text/javascript; charset=utf-8"),
           "/i18n.mjs": ("i18n.mjs", "text/javascript; charset=utf-8"),
+          "/calendar_overview.mjs": ("calendar_overview.mjs", "text/javascript; charset=utf-8"),
           "/styles.css": ("styles.css", "text/css; charset=utf-8")}
 CSP = ("default-src 'none'; script-src 'self'; style-src 'self'; "
        "connect-src 'self'; img-src 'none'; font-src 'none'; object-src 'none'; "
