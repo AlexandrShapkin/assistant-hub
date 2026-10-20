@@ -1,7 +1,7 @@
 # assistant-hub governance context
 
 Native architecture, security, CI and product rules remain consumer-owned; see
-[AGENTS.local.md](../AGENTS.local.md), [local workflow](workflow.md), the existing roadmap and documentation index.
+[AGENTS.local.md](../AGENTS.local.md), [local workflow](PROJECT_WORKFLOW.md), the existing roadmap and documentation index.
 Template alone owns the active shared lifecycle. Kit snapshots and optional skills
 are inert technical references; no skill is installed or activated.
 

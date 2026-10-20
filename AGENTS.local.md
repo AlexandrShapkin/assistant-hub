@@ -8,7 +8,7 @@ This migration grants no merge, deployment or runtime authority.
 
 Start by locating this repository's actual root, inspecting HEAD, branch,
 `git status --short`, current origin and the owning GitHub Issue. Read
-[docs/workflow.md](docs/workflow.md), then only the relevant architecture,
+[docs/PROJECT_WORKFLOW.md](docs/PROJECT_WORKFLOW.md), then only the relevant architecture,
 security, decision and roadmap sections. Do not silently switch clones or
 overwrite unrelated work.
 

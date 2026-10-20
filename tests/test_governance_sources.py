@@ -8,7 +8,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 RECORDS = {'.engineering-kit/source.json': 'ba0463e28ae15dc9f19a5d72b7fbc67a9374e2ab0e1b09854baa76c4f19ab12f', '.project-template/source.json': 'df3f4f93f44d9662e5b8c83dd24137ddbc5438215a717401b67d3215c90356e5'}
-LOCAL_SHA256 = 'ae19075af2ee9bfd0cd9cb54d1eec7a7af62b748ac533e1bdf884923a7982f03'
+LOCAL_SHA256 = '14b49c0fc55c505d5cb6f24d3a3ec27a3aff1b6340ae9c6f330cc0c18aa88256'
 
 
 def verify(root):
@@ -55,6 +55,11 @@ class GovernanceSources(unittest.TestCase):
             paths.extend(json.loads((ROOT / name).read_bytes())['files'])
         for name in paths:
             self.assertIn('/' + name + ' text eol=lf', attributes)
+
+    def test_authored_paths_have_no_case_collisions(self):
+        paths = [p.relative_to(ROOT).as_posix() for p in ROOT.glob('*.md')]
+        paths += [p.relative_to(ROOT).as_posix() for p in (ROOT / 'docs').rglob('*.md')]
+        self.assertEqual(len(paths), len({p.casefold() for p in paths}))
 
     def fixture(self, destination):
         for name in [*RECORDS, 'AGENTS.local.md', 'GOVERNANCE-NOTICE.txt']:
