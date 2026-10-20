@@ -1,0 +1,35 @@
+# Autonomous Development Contract v1. Metadata only, NOT executable authority.
+# Candidate prepared against Codex Smart Issue #165 / Draft #166 / Draft #167.
+schema_version = 1
+project_id = "assistant-hub"
+project_type = "python-stdlib"
+repository = "AlexandrShapkin/assistant-hub"
+
+[context]
+entrypoint = "AGENTS.md"
+architecture = "docs/architecture.md"
+workflow = "docs/workflow.md"
+current_plan = "docs/roadmap.md"
+security = "docs/security.md"
+task_source = "github-issues"
+
+[verification]
+# Only externally trusted fixed-argv adapters may interpret these IDs.
+# Preserve Python 3.11/3.12/3.13, public-tree and offline UI checks.
+profiles = ["python-tests", "python-compile", "python-doctor", "public-tree", "ui-tests"]
+ci_workflows = [".github/workflows/ci.yml"]
+live_device_proof = "not-applicable"
+
+[execution]
+enabled = false
+max_stage_seconds = 1200
+max_changed_files = 2
+max_changed_lines = 180
+checkpoint_mode = "external-private"
+auto_merge = false
+auto_deploy = false
+
+[change_policy]
+# Informational only; the authenticated operator provides actual write authority.
+candidate_paths = ["src/", "tests/", "docs/", "scripts/", "web/"]
+blocked_unattended_paths = [".github/", "automation/"]
