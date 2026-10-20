@@ -16,6 +16,12 @@ jobs:
         python: ['3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Shared agent contract
+        run: python -B scripts/check_agent_contract.py --project assistant-hub
+      - name: Agent contract regression tests
+        run: python -B -m unittest discover -s scripts -p 'test_agent_contract.py'
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
@@ -33,6 +39,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Shared agent contract
+        run: python -B scripts/check_agent_contract.py --project assistant-hub
+      - name: Agent contract regression tests
+        run: python -B -m unittest discover -s scripts -p 'test_agent_contract.py'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
