@@ -1,5 +1,5 @@
 # Autonomous Development Contract v1. Metadata only, NOT executable authority.
-# Candidate prepared against Codex Smart Issue #165 / Draft #166 / Draft #167.
+# Schema: Codex Smart #166; passive validator #167 (integration pending).
 schema_version = 1
 project_id = "assistant-hub"
 project_type = "python-stdlib"
@@ -8,7 +8,7 @@ repository = "AlexandrShapkin/assistant-hub"
 [context]
 entrypoint = "AGENTS.md"
 architecture = "docs/architecture.md"
-workflow = "docs/workflow.md"
+workflow = "docs/PROJECT_WORKFLOW.md"
 current_plan = "docs/roadmap.md"
 security = "docs/security.md"
 task_source = "github-issues"

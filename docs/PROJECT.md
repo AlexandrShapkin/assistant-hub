@@ -24,7 +24,7 @@ No new milestone is warranted: this task is not a confirmed product release.
 
 ## Product release applicability
 
-Product distribution applicability remains UNVERIFIED: localhost pre-alpha and synthetic Pages are not proof of distributable application packaging. Owner AlexandrShapkin, P2, release subsystem: confirm supported package/target matrix before first significant release; no speculative milestone or packaging is added.
+Current source-only pre-alpha distribution is N/A for the reasons and bounded milestone in the matrix below; qualify actual packaging before the first significant distributable release.
 The shared release requirements resolve through the canonical interface; product
 version history remains independent of Kit and Template. No tag, Release,
 release asset or publication automation is introduced by this migration.
@@ -36,3 +36,20 @@ must be reconciled explicitly during independent review; do not merge either
 policy activation blindly. This branch starts from main, not an unreviewed stack.
 Author checks, exact-head native CI, independent acceptance and merge authority
 remain separate. No consumer is ACCEPTED by opening this Draft.
+
+## Bounded release matrix qualification
+
+| Product | Targets / format | Qualification |
+| --- | --- | --- |
+| Current source-only localhost pre-alpha | Distribution artifacts N/A at this stage | No installable package or supported product distribution is established. Synthetic Pages is a demo, not an application installer. |
+
+This N/A classification applies to the current source/development milestone,
+not future significant user-facing product delivery. Before declaring one,
+select and validate its actual package/target matrix under the shared release
+contract. Do not ship placeholder packages. Source-only Releases still require
+narrative notes, exact-head Python/UI/security evidence and independent versions.
+
+Contract v1 adoption remains inert. Its canonical schema and passive validator
+are Codex Smart #166/#167; independently pinned adapter mappings and Git evidence
+must be accepted before claiming authenticated readiness. GitHub Issues remain
+the live queue. No runtime or optional Hub integration is enabled.
