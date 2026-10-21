@@ -50,5 +50,5 @@ CI and public-tree checks.
 Beyond the optional public GitHub and public feed readers, no real provider integration, external sending, model calls, deployments,
 production dates, provider compatibilities or license grants are claimed.
 
-See [development workflow](workflow.md) for Issue/PR lifecycle, testing,
+See [development workflow](PROJECT_WORKFLOW.md) for Issue/PR lifecycle, testing,
 evidence requirements and security boundaries.

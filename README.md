@@ -124,7 +124,7 @@ working memory per derivation). This is not a credential vault: encryption,
 - `src/assistant_hub/cli.py`: local demonstration commands.
 - `tests/`, `scripts/`: regression evidence and public-tree hygiene checks.
 - `docs/`: boundaries, security assumptions, decisions, and future scope.
-- [Development workflow](docs/workflow.md): Issues as live tasks, scoped PRs,
+- [Development workflow](docs/PROJECT_WORKFLOW.md): Issues as live tasks, scoped PRs,
   explicit CI checks and autonomous routine engineering.
 - [.github/ISSUE_TEMPLATE](.github/ISSUE_TEMPLATE): bug and feature intake.
 - [Roadmap](docs/roadmap.md): stage sequencing and Issue references.

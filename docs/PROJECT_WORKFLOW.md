@@ -1,3 +1,8 @@
+# Local project procedures
+
+The canonical [Template interface](../.github/DEVELOPMENT_INTERFACE.md) owns shared
+lifecycle policy. This document retains native procedures and security boundaries.
+
 # Development workflow
 
 This repository follows an **issue-driven, verifiable workflow** inspired by the
@@ -12,7 +17,7 @@ ideas, **not their runtimes or product architectures**.
 - Pull Requests + CI: change descriptions and validation evidence.
 - AGENTS.md: contributor/agent bootstrap and standing scope.
 - The owner has authorized routine autonomous development, including issues,
-  branches, commits, PRs, CI and merges after passing checks. Avoid repeated
+  branches, commits, Draft PRs and CI. Merges require separate current authority and independent acceptance. Avoid repeated
   permission questions for ordinary repository work.
 
 ## Standard loop
@@ -24,7 +29,7 @@ ideas, **not their runtimes or product architectures**.
 5. Make the smallest coherent implementation with deterministic tests.
 6. Review the diff and inspect any staged content for secrets or private material.
 7. Open a PR referencing the Issue with scope, evidence and remaining limitations.
-8. Use CI, inspect the final SHA, then merge; confirm that GitHub reflects closure.
+8. Use CI, inspect the final SHA and request independent review; keep Draft until accepted.
 9. Update roadmap/ADRs only where ownership or durable decisions changed.
 
 For a clean initial repository bootstrap, an initial main commit is permitted.
@@ -43,7 +48,7 @@ From repository root:
 CI validates Python 3.11, 3.12, 3.13. Workflow triggers on PRs against
 main and on merged main pushes; avoid duplicate check names from feature-branch
 pushes. The main branch is intended to require a PR and all three checks,
-with **zero required human reviews**, so routine work proceeds autonomously.
+with its existing protection configuration; that configuration does not grant merge authority.
 Verify enforcement in GitHub settings rather than relying on this document.
 A green local run on another version does not substitute for CI evidence.
 If GitHub branch protection is unavailable, record that limitation rather than
