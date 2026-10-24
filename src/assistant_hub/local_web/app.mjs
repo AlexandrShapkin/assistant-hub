@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, LOCALES, t, formatDate } from './i18n.mjs';
+import { renderDevelopment } from './development.mjs';
 import {
   preferredCalendarWeek, weekSnapshotState, upcomingCalendarLessons,
 } from './calendar_overview.mjs';
@@ -24,6 +25,8 @@ const statuses = ['new', 'review', 'deferred', 'done'];
 
 function loggedOut() {
   token = null;
+  $('development-tasks').replaceChildren();
+  $('development-notice').textContent = '';
   events = [];
   services = [];
   selected = null;
@@ -245,6 +248,27 @@ async function refresh() {
   events = await api('/api/inbox');
   render();
 }
+async function developmentRefresh() {
+  const session = token;
+  const snapshot = await api('/api/development');
+  if (!token || token !== session) return;
+  renderDevelopment($('development-tasks'), snapshot, async (task_id, action) => {
+    try {
+      await api('/api/development/control', {message_id: crypto.randomUUID(), task_id, action});
+      $('development-notice').textContent = 'Request saved; pending, not delivered. Agent execution state unchanged.';
+      await developmentRefresh();
+    } catch {
+      $('development-notice').textContent = 'Request failed. Refresh before retrying.';
+    }
+  });
+}
+$('development-refresh').addEventListener('click', () => run($('development-refresh'), developmentRefresh));
+// Watchdog refresh only reads the local ledger, never collects provider data.
+setInterval(() => {
+  if (token && !$('workspace').hidden) developmentRefresh().catch(() => {
+    if (token) $('development-notice').textContent = 'Refresh failed; displayed reports may be stale.';
+  });
+}, 15000);
 async function run(button, action) {
   button.disabled = true;
   try { await action(); }
@@ -265,6 +289,7 @@ $('login-form').addEventListener('submit', event => {
     accounts();
     await refresh();
     await calendarRefresh();
+    await developmentRefresh();
     $('login-panel').hidden = true;
     $('workspace').hidden = false;
     notice('signedIn');
