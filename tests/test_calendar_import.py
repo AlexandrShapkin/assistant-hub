@@ -153,5 +153,32 @@ class CalendarImportTests(unittest.TestCase):
             self.assertEqual(before, (store.inbox(), store.audit(), store.calendar_weeks()))
 
 
+    def test_calendar_audit_failure_rolls_back_every_write(self):
+        week, original = parse_ical(calendar(event("audit-uid")))
+        _, changed = parse_ical(calendar(event("audit-uid", title="Changed")))
+        with tempfile.TemporaryDirectory() as tmp, closing(Store(Path(tmp) / "db")) as store:
+            store.import_calendar_week(week, original)
+            before = (store.inbox(), store.audit(), store.calendar_weeks(),
+                      store.calendar_changes())
+            with patch.object(store, "_audit", side_effect=RuntimeError("audit unavailable")):
+                with self.assertRaises(RuntimeError):
+                    store.import_calendar_week(week, changed)
+            self.assertEqual(
+                (store.inbox(), store.audit(), store.calendar_weeks(),
+                 store.calendar_changes()), before
+            )
+
+    def test_importing_core_store_does_not_load_calendar_provider(self):
+        import subprocess
+        import sys
+        source = Path(__file__).resolve().parents[1] / "src"
+        code = ("import sys; sys.path.insert(0, sys.argv[1]); "
+                "import assistant_hub.core.store; "
+                "assert 'assistant_hub.calendar_import' not in sys.modules")
+        result = subprocess.run([sys.executable, "-c", code, str(source)],
+                                capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
