@@ -1,12 +1,23 @@
 """Orchestration of enabled adapters, persistence, and independent policy."""
-from .contracts import ActionIntent, ApprovalRule, Decision, validate_cursor
+from typing import Protocol
+
+from .contracts import ActionIntent, ApprovalRule, Decision, PollResult, validate_cursor
 from .policy import decide
 from .registry import Registry
-from .store import Store
+
+
+class HubPersistence(Protocol):
+    """Only the storage operations needed by adapter orchestration."""
+
+    def cursor(self, service: str, account: str) -> str | None: ...
+
+    def ingest(self, service: str, account: str, result: PollResult) -> int: ...
+
+    def record_intent(self, intent: ActionIntent, decision: Decision) -> Decision: ...
 
 
 class Hub:
-    def __init__(self, registry: Registry, store: Store) -> None:
+    def __init__(self, registry: Registry, store: HubPersistence) -> None:
         self.registry, self.store = registry, store
 
     def collect(self, service_id: str, account_id: str) -> int:
