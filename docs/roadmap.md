@@ -1,3 +1,10 @@
+# Status: paused
+
+Product development is suspended pending practical evaluation of the self-hosted OpenClaw platform.
+There is no active platform-development roadmap. Existing proposals below are historical research; reconsider only after evaluation and an explicit owner decision. No OpenClaw integration is planned in this change.
+
+## Historical roadmap
+
 # Roadmap
 
 **Status:** pre-alpha. GitHub [Issues](https://github.com/AlexandrShapkin/assistant-hub/issues) is the live source of truth for task state. This page describes sequencing and links, not a second queue. Milestones group stages and do not certify production readiness.

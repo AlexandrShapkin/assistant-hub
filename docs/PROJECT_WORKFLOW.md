@@ -1,7 +1,11 @@
+> **Paused — owner decision, 2026-11-10.** Product development is suspended pending practical evaluation of the self-hosted OpenClaw platform.
+> Existing source, research and acceptance evidence are retained for reference.
+> Historical platform roadmaps and development commitments below are superseded;
+> they do not authorize renewed development. No OpenClaw integration is implemented.
+
 # Local project procedures
 
-The canonical [Template interface](../.github/DEVELOPMENT_INTERFACE.md) owns shared
-lifecycle policy. This document retains native procedures and security boundaries.
+The [local workflow](../.github/DEVELOPMENT_INTERFACE.md) describes development. This document retains native procedures and security boundaries.
 
 # Development workflow
 

@@ -1,3 +1,8 @@
+> **Paused — owner decision, 2026-11-10.** Product development is suspended pending practical evaluation of the self-hosted OpenClaw platform.
+> Existing source, research and acceptance evidence are retained for reference.
+> Historical platform roadmaps and development commitments below are superseded;
+> they do not authorize renewed development. No OpenClaw integration is implemented.
+
 # Contributing
 
 This pre-alpha accepts small, reviewable local changes with clear scope and test
