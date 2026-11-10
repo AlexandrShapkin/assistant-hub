@@ -1,8 +1,11 @@
+> **Paused — owner decision, 2026-11-10.** Product development is suspended pending practical evaluation of the self-hosted OpenClaw platform.
+> Existing source, research and acceptance evidence are retained for reference.
+> Historical platform roadmaps and development commitments below are superseded;
+> they do not authorize renewed development. No OpenClaw integration is implemented.
+
 # Project-local rules
 
-Follow root AGENTS.md; load canonical interface sections only when task-triggered, while preserving all binding requirements. These retained native
-rules may strengthen it; shared lifecycle policy belongs to Project Template.
-This migration grants no merge, deployment or runtime authority.
+Follow root AGENTS.md. This repository owns its native procedures and security boundaries.
 
 # Engineering instructions for Assistant Hub agents
 
